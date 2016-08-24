@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 
 	"github.com/compozed/deployadactyl/config"
@@ -59,6 +60,7 @@ var _ = Describe("Deployer", func() {
 		uuid            string
 		password        string
 		context         *gin.Context
+		recorder        *httptest.ResponseRecorder
 
 		deploymentInfo  S.DeploymentInfo
 		deployEventData S.DeployEventData
@@ -117,7 +119,7 @@ var _ = Describe("Deployer", func() {
 		randomizerMock.RandomizeCall.Returns.Runes = uuid
 
 		foundations = []string{randomizer.StringRunes(10)}
-		context, _, _ = gin.CreateTestContext()
+		context, recorder, _ = gin.CreateTestContext()
 
 		environments = map[string]config.Environment{}
 		environments[environmentName] = config.Environment{
@@ -140,7 +142,6 @@ var _ = Describe("Deployer", func() {
 	})
 
 	Describe("deploy JSON", func() {
-
 		Context("when fetcher fails", func() {
 			It("returns an error", func() {
 				prechecker.AssertAllFoundationsUpCall.Returns.Error = nil
@@ -182,6 +183,8 @@ var _ = Describe("Deployer", func() {
 				Expect(err).To(BeNil())
 				Expect(statusCode).To(Equal(http.StatusOK))
 
+				Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
+
 				Expect(fetcher.FetchCall.Received.ArtifactURL).To(Equal(artifactURL))
 				Expect(fetcher.FetchCall.Received.Manifest).To(BeEmpty())
 				Expect(blueGreener.PushCall.Received.Environment).To(Equal(environments[environmentName]))
@@ -222,7 +225,7 @@ var _ = Describe("Deployer", func() {
 				err, statusCode := deployer.Deploy(req, environmentName, org, space, appName, "", jsonRequest, context)
 				Expect(err).To(MatchError("an error occurred in the deploy.start event"))
 				Expect(statusCode).To(Equal(http.StatusInternalServerError))
-				// Expect(context).To(ContainSubstring("event error"))
+				Expect(recorder.Body).To(ContainSubstring("event error"))
 			})
 		})
 
@@ -249,7 +252,7 @@ var _ = Describe("Deployer", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(statusCode).To(Equal(http.StatusOK))
-				// Expect(context).To(ContainSubstring("deploy was successful"))
+				Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
 				Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
 			})
 
@@ -291,7 +294,7 @@ var _ = Describe("Deployer", func() {
 				err, statusCode := deployer.Deploy(req, environmentName, org, space, appName, wd, zipRequest, context)
 				Expect(err).To(BeNil())
 				Expect(statusCode).To(Equal(http.StatusOK))
-				// Expect(context).To(ContainSubstring("deploy was successful"))
+				Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
 
 				Expect(prechecker.AssertAllFoundationsUpCall.Received.Environment).To(Equal(environments[environmentName]))
 				Expect(blueGreener.PushCall.Received.Environment).To(Equal(environments[environmentName]))
@@ -309,8 +312,9 @@ var _ = Describe("Deployer", func() {
 
 				err, statusCode := deployer.Deploy(req, environmentName, org, space, appName, "", zipRequest, context)
 				Expect(err).To(BeNil())
+
 				Expect(statusCode).To(Equal(http.StatusOK))
-				// Expect(context).To(ContainSubstring("deploy was successful"))
+				Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
 			})
 		})
 
@@ -350,7 +354,7 @@ var _ = Describe("Deployer", func() {
 				err, statusCode := deployer.Deploy(req, environmentName, org, space, appName, wd, zipRequest, context)
 				Expect(err).To(MatchError("an error occurred in the deploy.start event"))
 				Expect(statusCode).To(Equal(http.StatusInternalServerError))
-				// Expect(context).To(ContainSubstring("event error"))
+				Expect(recorder.Body).To(ContainSubstring("event error"))
 			})
 		})
 	})
@@ -371,9 +375,9 @@ var _ = Describe("Deployer", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(statusCode).To(Equal(http.StatusOK))
 
-			// Expect(context).To(ContainSubstring("deploy was successful"))
+			Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
 			Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
-			// Expect(context).To(ContainSubstring(fmt.Sprintf("Username:     %s", username)))
+			Expect(recorder.Body).To(ContainSubstring(fmt.Sprintf("Username:     %s", username)))
 		})
 	})
 
@@ -428,9 +432,9 @@ var _ = Describe("Deployer", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(statusCode).To(Equal(http.StatusOK))
 
-			// Expect(context).To(ContainSubstring("deploy was successful"))
+			Expect(recorder.Body).To(ContainSubstring("deploy was successful"))
 			Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
-			// Expect(context).To(ContainSubstring(fmt.Sprintf("Username:     %s", username)))
+			Expect(recorder.Body).To(ContainSubstring(fmt.Sprintf("Username:     %s", username)))
 		})
 	})
 
@@ -448,7 +452,7 @@ var _ = Describe("Deployer", func() {
 
 			deployer = Deployer{emptyConfiguration, blueGreener, fetcher, prechecker, eventManager, randomizerMock, log}
 			err, statusCode := deployer.Deploy(req, environmentName, org, space, appName, "", jsonRequest, context)
-			// Expect(context).To(ContainSubstring(errorMessage))
+			Expect(recorder.Body).To(ContainSubstring(errorMessage))
 			Expect(err).To(MatchError(errorMessage))
 			Expect(statusCode).To(Equal(http.StatusInternalServerError))
 		})
@@ -474,12 +478,12 @@ var _ = Describe("Deployer", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(statusCode).To(Equal(http.StatusOK))
 
-			// Expect(context).To(ContainSubstring(artifactURL))
-			// Expect(context).To(ContainSubstring(username))
-			// Expect(context).To(ContainSubstring(environmentName))
-			// Expect(context).To(ContainSubstring(org))
-			// Expect(context).To(ContainSubstring(space))
-			// Expect(context).To(ContainSubstring(appName))
+			Expect(recorder.Body).To(ContainSubstring(artifactURL))
+			Expect(recorder.Body).To(ContainSubstring(username))
+			Expect(recorder.Body).To(ContainSubstring(environmentName))
+			Expect(recorder.Body).To(ContainSubstring(org))
+			Expect(recorder.Body).To(ContainSubstring(space))
+			Expect(recorder.Body).To(ContainSubstring(appName))
 
 			Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
 		})
