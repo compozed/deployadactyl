@@ -12,6 +12,7 @@ import (
 	"regexp"
 
 	"github.com/compozed/deployadactyl/config"
+	"github.com/compozed/deployadactyl/flushwriter"
 	"github.com/compozed/deployadactyl/geterrors"
 	I "github.com/compozed/deployadactyl/interfaces"
 	S "github.com/compozed/deployadactyl/structs"
@@ -57,19 +58,6 @@ type Deployer struct {
 	Log          *logging.Logger
 }
 
-type flushWriter struct {
-	f http.Flusher
-	w io.Writer
-}
-
-func (fw *flushWriter) Write(p []byte) (n int, err error) {
-	n, err = fw.w.Write(p)
-	if fw.f != nil {
-		fw.f.Flush()
-	}
-	return
-}
-
 // Deploy takes the deployment information, checks the foundations, fetches the artifact and deploys the application.
 func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, g *gin.Context) (err error, statusCode int) {
 	var (
@@ -78,12 +66,8 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 		authenticationRequired = environments[environmentName].Authenticate
 		deployEventData        = S.DeployEventData{}
 		manifest               []byte
-		fw                     = flushWriter{w: g.Writer}
+		fw                     = flushwriter.New(g.Writer)
 	)
-
-	if f, ok := g.Writer.(http.Flusher); ok {
-		fw.f = f
-	}
 
 	if isJSONRequest(contentType) {
 		deploymentInfo, err = getDeploymentInfo(req.Body)

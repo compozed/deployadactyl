@@ -62,11 +62,10 @@ var _ = Describe("Deployer", func() {
 		context         *gin.Context
 		recorder        *httptest.ResponseRecorder
 
-		deploymentInfo  S.DeploymentInfo
-		deployEventData S.DeployEventData
-		foundations     []string
-		environments    = map[string]config.Environment{}
-		log             = logger.DefaultLogger(GinkgoWriter, logging.DEBUG, "test")
+		deploymentInfo S.DeploymentInfo
+		foundations    []string
+		environments   = map[string]config.Environment{}
+		log            = logger.DefaultLogger(GinkgoWriter, logging.DEBUG, "test")
 	)
 
 	BeforeEach(func() {
@@ -109,11 +108,6 @@ var _ = Describe("Deployer", func() {
 			Space:       space,
 			AppName:     appName,
 			UUID:        uuid,
-		}
-
-		deployEventData = S.DeployEventData{
-			Writer:         &bytes.Buffer{},
-			DeploymentInfo: &deploymentInfo,
 		}
 
 		randomizerMock.RandomizeCall.Returns.Runes = uuid

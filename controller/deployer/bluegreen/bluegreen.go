@@ -4,8 +4,6 @@ package bluegreen
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/compozed/deployadactyl/config"
 	I "github.com/compozed/deployadactyl/interfaces"
@@ -26,22 +24,9 @@ type BlueGreen struct {
 	Log           *logging.Logger
 }
 
-type flushWriter struct {
-	f http.Flusher
-	w io.Writer
-}
-
-func (fw *flushWriter) Write(p []byte) (n int, err error) {
-	n, err = fw.w.Write(p)
-	if fw.f != nil {
-		fw.f.Flush()
-	}
-	return
-}
-
 // Push will login to all the Cloud Foundry instances provided in the Config and then push the application to all the instances concurrently.
 // If the application fails to start in any of the instances it handles rolling back the application in every instance, unless this is the first deploy and disable rollback is enabled.
-func (bg BlueGreen) Push(environment config.Environment, appPath string, deploymentInfo S.DeploymentInfo, out I.FlushWriter) error {
+func (bg BlueGreen) Push(environment config.Environment, appPath string, deploymentInfo S.DeploymentInfo, fw I.FlushWriter) error {
 	var responseLogs []byte
 
 	actors := make([]actor, len(environment.Foundations))
@@ -64,7 +49,7 @@ func (bg BlueGreen) Push(environment config.Environment, appPath string, deploym
 	failed := bg.loginAll(actors, buffers, deploymentInfo)
 	if failed {
 		for _, buffer := range buffers {
-			buffer.WriteTo(out)
+			buffer.WriteTo(fw)
 		}
 		return errors.New(loginFailed)
 	}
@@ -77,13 +62,13 @@ func (bg BlueGreen) Push(environment config.Environment, appPath string, deploym
 	for _, buffer := range buffers {
 		buffer.WriteTo(combinedOutput)
 	}
-	_, err := combinedOutput.WriteTo(out)
+	_, err := combinedOutput.WriteTo(fw)
 	if err != nil {
 		return errors.New(err)
 	}
 
 	defer func() {
-		fmt.Fprint(out, string(responseLogs))
+		fmt.Fprint(fw, string(responseLogs))
 	}()
 
 	// Rollback if deploy failed and this is not the first build or DisableFirstDeployRollback is false
