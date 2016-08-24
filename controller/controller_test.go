@@ -29,8 +29,9 @@ var _ = Describe("Controller", func() {
 		deployer     *mocks.Deployer
 		eventManager *mocks.EventManager
 		fetcher      *mocks.Fetcher
-		router       *gin.Engine
+		context      *gin.Context
 		resp         *httptest.ResponseRecorder
+		router       *gin.Engine
 
 		environment     string
 		org             string
@@ -82,8 +83,7 @@ var _ = Describe("Controller", func() {
 			appName,
 		)
 
-		router = gin.New()
-		resp = httptest.NewRecorder()
+		context, resp, router = gin.CreateTestContext()
 
 		router.POST("/v1/apps/:environment/:org/:space/:appName", controller.Deploy)
 
@@ -101,7 +101,6 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 				req.Header.Set("Content-Type", "application/json")
 
-				deployer.DeployCall.Received.Request = req
 				deployer.DeployCall.Returns.Error = nil
 				deployer.DeployCall.Returns.StatusCode = 200
 
@@ -119,8 +118,6 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				req.Header.Set("Content-Type", "application/json")
-
-				deployer.DeployCall.Received.Request = req
 
 				deployer.DeployCall.Returns.Error = errors.New("internal server error")
 				deployer.DeployCall.Returns.StatusCode = 500
@@ -141,8 +138,6 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 				req.Header.Set("Content-Type", "application/zip")
 
-				deployer.DeployCall.Received.Request = req
-
 				fetcher.FetchFromZipCall.Received.RequestBody = nil
 				fetcher.FetchFromZipCall.Returns.AppPath = "appPath-" + randomizer.StringRunes(10)
 				fetcher.FetchFromZipCall.Returns.Error = nil
@@ -161,8 +156,6 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 				req.Header.Set("Content-Type", "application/zip")
 
-				deployer.DeployCall.Received.Request = req
-
 				router.ServeHTTP(resp, req)
 
 				Expect(deployer.DeployCall.TimesCalled).To(Equal(0), deployerNotEnoughCalls)
@@ -176,8 +169,6 @@ var _ = Describe("Controller", func() {
 				req, err := http.NewRequest("POST", apiURL, jsonBuffer)
 				Expect(err).ToNot(HaveOccurred())
 				req.Header.Set("Content-Type", "application/zip")
-
-				deployer.DeployCall.Received.Request = req
 
 				fetcher.FetchFromZipCall.Received.RequestBody = jsonBuffer.Bytes()
 				fetcher.FetchFromZipCall.Returns.AppPath = ""
@@ -196,8 +187,6 @@ var _ = Describe("Controller", func() {
 				req, err := http.NewRequest("POST", apiURL, jsonBuffer)
 				Expect(err).ToNot(HaveOccurred())
 				req.Header.Set("Content-Type", "application/zip")
-
-				deployer.DeployCall.Received.Request = req
 
 				fetcher.FetchFromZipCall.Received.RequestBody = jsonBuffer.Bytes()
 				fetcher.FetchFromZipCall.Returns.AppPath = "appPath-" + randomizer.StringRunes(10)

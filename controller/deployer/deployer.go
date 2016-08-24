@@ -59,7 +59,7 @@ type Deployer struct {
 }
 
 // Deploy takes the deployment information, checks the foundations, fetches the artifact and deploys the application.
-func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, g *gin.Context) (err error, statusCode int) {
+func (d Deployer) Deploy(g *gin.Context, environmentName, org, space, appName, appPath, contentType string) (err error, statusCode int) {
 	var (
 		deploymentInfo         = S.DeploymentInfo{}
 		environments           = d.Config.Environments
@@ -70,14 +70,14 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 	)
 
 	if isJSONRequest(contentType) {
-		deploymentInfo, err = getDeploymentInfo(req.Body)
+		deploymentInfo, err = getDeploymentInfo(g.Request.Body)
 		if err != nil {
 			fmt.Fprintln(&fw, err)
 			return err, http.StatusInternalServerError
 		}
 	}
 
-	username, password, ok := req.BasicAuth()
+	username, password, ok := g.Request.BasicAuth()
 	if !ok {
 		if authenticationRequired {
 			return errors.New(basicAuthHeaderNotFound), http.StatusUnauthorized
@@ -106,7 +106,7 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 	deployEventData = S.DeployEventData{
 		Writer:         &fw,
 		DeploymentInfo: &deploymentInfo,
-		RequestBody:    req.Body,
+		RequestBody:    g.Request.Body,
 	}
 
 	if isJSONRequest(contentType) && deploymentInfo.Manifest != "" {

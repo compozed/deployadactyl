@@ -3,7 +3,6 @@ package mocks
 import (
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +12,7 @@ type Deployer struct {
 	DeployCall struct {
 		TimesCalled int
 		Received    struct {
-			Request         *http.Request
+			Context         *gin.Context
 			EnvironmentName string
 			Org             string
 			Space           string
@@ -33,10 +32,10 @@ type Deployer struct {
 }
 
 // Deploy mock method.
-func (d *Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, g *gin.Context) (err error, statusCode int) {
+func (d *Deployer) Deploy(g *gin.Context, environmentName, org, space, appName, appPath, contentType string) (err error, statusCode int) {
 	defer func() { d.DeployCall.TimesCalled++ }()
 
-	d.DeployCall.Received.Request = req
+	d.DeployCall.Received.Context = g
 	d.DeployCall.Received.EnvironmentName = environmentName
 	d.DeployCall.Received.Org = org
 	d.DeployCall.Received.Space = space
