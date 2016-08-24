@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Deployer handmade mock for tests.
@@ -31,7 +33,7 @@ type Deployer struct {
 }
 
 // Deploy mock method.
-func (d *Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, out io.Writer) (err error, statusCode int) {
+func (d *Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, g *gin.Context) (err error, statusCode int) {
 	defer func() { d.DeployCall.TimesCalled++ }()
 
 	d.DeployCall.Received.Request = req
@@ -41,9 +43,11 @@ func (d *Deployer) Deploy(req *http.Request, environmentName, org, space, appNam
 	d.DeployCall.Received.AppName = appName
 	d.DeployCall.Received.AppPath = appPath
 	d.DeployCall.Received.ContentType = contentType
-	d.DeployCall.Received.Out = out
+	d.DeployCall.Received.Out = g.Writer
 
-	fmt.Fprint(out, d.DeployCall.Write.Output)
+	g.Writer.WriteHeader(d.DeployCall.Returns.StatusCode)
+
+	fmt.Fprint(g.Writer, d.DeployCall.Write.Output)
 
 	return d.DeployCall.Returns.Error, d.DeployCall.Returns.StatusCode
 }

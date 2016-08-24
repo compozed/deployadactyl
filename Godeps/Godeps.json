@@ -1,10 +1,7 @@
 {
 	"ImportPath": "github.com/compozed/deployadactyl",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
@@ -16,22 +13,26 @@
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
-			"Comment": "v1.0rc1-148-g52fcc5d",
-			"Rev": "52fcc5dbf6e94df33ad313858fb94b713e9d1b4a"
+			"Comment": "v1.0rc1-262-g5caaac4",
+			"Rev": "5caaac4c5c712a9e7a7de29e6c24ef46c753017f"
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin/binding",
-			"Comment": "v1.0rc1-148-g52fcc5d",
-			"Rev": "52fcc5dbf6e94df33ad313858fb94b713e9d1b4a"
+			"Comment": "v1.0rc1-262-g5caaac4",
+			"Rev": "5caaac4c5c712a9e7a7de29e6c24ef46c753017f"
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin/render",
-			"Comment": "v1.0rc1-148-g52fcc5d",
-			"Rev": "52fcc5dbf6e94df33ad313858fb94b713e9d1b4a"
+			"Comment": "v1.0rc1-262-g5caaac4",
+			"Rev": "5caaac4c5c712a9e7a7de29e6c24ef46c753017f"
 		},
 		{
 			"ImportPath": "github.com/go-errors/errors",
 			"Rev": "a41850380601eeb43f4350f7d17c6bbd8944aaf8"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "888eb0692c857ec880338addf316bd662d5e630e"
 		},
 		{
 			"ImportPath": "github.com/kr/fs",
@@ -39,15 +40,7 @@
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
-			"Rev": "fe6ea2c8e398672518ef204bf0fbd9af858d0e15"
-		},
-		{
-			"ImportPath": "github.com/mattn/go-colorable",
-			"Rev": "3dac7b4f76f6e17fb39b768b89e3783d16e237fe"
-		},
-		{
-			"ImportPath": "github.com/mattn/go-isatty",
-			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
+			"Rev": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
@@ -219,11 +212,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "c93a9b4f2af537028078fd467936d5bd6320e126"
-		},
-		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "442cd600860ce722f6615730eb008a37a87b13ee"
+			"Rev": "7394c112eae4dba7e96bfcfe738e6373d61772b4"
 		},
 		{
 			"ImportPath": "golang.org/x/text/transform",
@@ -234,9 +223,13 @@
 			"Rev": "cf4986612c83df6c55578ba198316d1684a9a287"
 		},
 		{
-			"ImportPath": "gopkg.in/bluesuncorp/validator.v5",
-			"Comment": "v5.12",
-			"Rev": "d5acf1dac43705f8bfbb71d878e290e2bed3950b"
+			"ImportPath": "gopkg.in/go-playground/validator.v8",
+			"Comment": "v8.18.1",
+			"Rev": "5f57d2222ad794d0dffb07e664ea05e2ee07d60c"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 		}
 	]
 }

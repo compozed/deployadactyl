@@ -15,6 +15,7 @@ import (
 	"github.com/compozed/deployadactyl/geterrors"
 	I "github.com/compozed/deployadactyl/interfaces"
 	S "github.com/compozed/deployadactyl/structs"
+	"github.com/gin-gonic/gin"
 	"github.com/go-errors/errors"
 	"github.com/op/go-logging"
 )
@@ -56,20 +57,38 @@ type Deployer struct {
 	Log          *logging.Logger
 }
 
+type flushWriter struct {
+	f http.Flusher
+	w io.Writer
+}
+
+func (fw *flushWriter) Write(p []byte) (n int, err error) {
+	n, err = fw.w.Write(p)
+	if fw.f != nil {
+		fw.f.Flush()
+	}
+	return
+}
+
 // Deploy takes the deployment information, checks the foundations, fetches the artifact and deploys the application.
-func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, out io.Writer) (err error, statusCode int) {
+func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName, appPath, contentType string, g *gin.Context) (err error, statusCode int) {
 	var (
 		deploymentInfo         = S.DeploymentInfo{}
 		environments           = d.Config.Environments
 		authenticationRequired = environments[environmentName].Authenticate
 		deployEventData        = S.DeployEventData{}
 		manifest               []byte
+		fw                     = flushWriter{w: g.Writer}
 	)
+
+	if f, ok := g.Writer.(http.Flusher); ok {
+		fw.f = f
+	}
 
 	if isJSONRequest(contentType) {
 		deploymentInfo, err = getDeploymentInfo(req.Body)
 		if err != nil {
-			fmt.Fprintln(out, err)
+			fmt.Fprintln(&fw, err)
 			return err, http.StatusInternalServerError
 		}
 	}
@@ -98,10 +117,10 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 
 	deploymentMessage := fmt.Sprintf(deploymentOutput, deploymentInfo.ArtifactURL, deploymentInfo.Username, deploymentInfo.Environment, deploymentInfo.Org, deploymentInfo.Space, deploymentInfo.AppName)
 	d.Log.Debug(deploymentMessage)
-	fmt.Fprintln(out, deploymentMessage)
+	fmt.Fprintln(&fw, deploymentMessage)
 
 	deployEventData = S.DeployEventData{
-		Writer:         out,
+		Writer:         &fw,
 		DeploymentInfo: &deploymentInfo,
 		RequestBody:    req.Body,
 	}
@@ -109,14 +128,14 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 	if isJSONRequest(contentType) && deploymentInfo.Manifest != "" {
 		manifest, err = base64.StdEncoding.DecodeString(deploymentInfo.Manifest)
 		if err != nil {
-			fmt.Fprintln(out, err)
+			fmt.Fprintln(&fw, err)
 			return errors.New(cannotOpenManifestFile), http.StatusBadRequest
 		}
 	}
 	if isZipRequest(contentType) {
 		manifest, err = ioutil.ReadFile(appPath + "/manifest.yml")
 		if err != nil {
-			fmt.Fprintln(out, cannotFindManifestFile)
+			fmt.Fprintln(&fw, cannotFindManifestFile)
 		}
 	}
 	deploymentInfo.Manifest = string(manifest)
@@ -129,7 +148,7 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 
 		eventErr := d.EventManager.Emit(deployFinishEvent)
 		if eventErr != nil {
-			fmt.Fprintln(out, eventErr)
+			fmt.Fprintln(&fw, eventErr)
 		}
 
 		if err != nil {
@@ -146,12 +165,12 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 
 	err = d.EventManager.Emit(deployStartEvent)
 	if err != nil {
-		fmt.Fprintln(out, err)
+		fmt.Fprintln(&fw, err)
 		return errors.New(deployStartError), http.StatusInternalServerError
 	}
 
 	deployEventData = S.DeployEventData{
-		Writer:         out,
+		Writer:         &fw,
 		DeploymentInfo: &deploymentInfo,
 	}
 
@@ -164,24 +183,24 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 
 		err = d.EventManager.Emit(deployEvent)
 		if err != nil {
-			fmt.Fprintln(out, err)
+			fmt.Fprintln(&fw, err)
 		}
 
 		err = errors.Errorf("%s: %s", environmentNotFound, deploymentInfo.Environment)
-		fmt.Fprintln(out, err)
+		fmt.Fprintln(&fw, err)
 		return err, http.StatusInternalServerError
 	}
 
 	err = d.Prechecker.AssertAllFoundationsUp(environment)
 	if err != nil {
-		fmt.Fprintln(out, err)
+		fmt.Fprintln(&fw, err)
 		return errors.New(err), http.StatusInternalServerError
 	}
 
 	if isJSONRequest(contentType) {
 		appPath, err = d.Fetcher.Fetch(deploymentInfo.ArtifactURL, deploymentInfo.Manifest)
 		if err != nil {
-			fmt.Fprintln(out, err)
+			fmt.Fprintln(&fw, err)
 			return err, http.StatusInternalServerError
 		}
 		defer os.RemoveAll(appPath)
@@ -199,19 +218,20 @@ func (d Deployer) Deploy(req *http.Request, environmentName, org, space, appName
 
 		eventErr := d.EventManager.Emit(deployEvent)
 		if eventErr != nil {
-			fmt.Fprintln(out, eventErr)
+			fmt.Fprintln(&fw, eventErr)
 		}
 	}()
 
-	err = d.BlueGreener.Push(environment, appPath, deploymentInfo, out)
+	err = d.BlueGreener.Push(environment, appPath, deploymentInfo, &fw)
 	if err != nil {
+		fmt.Fprintln(&fw, err)
 		if matched, _ := regexp.MatchString("login failed", err.Error()); matched {
 			return err, http.StatusUnauthorized
 		}
 		return err, http.StatusInternalServerError
 	}
 
-	fmt.Fprintln(out, fmt.Sprintf("\n%s", successfulDeploy))
+	fmt.Fprintln(&fw, fmt.Sprintf("\n%s", successfulDeploy))
 	return err, http.StatusOK
 }
 

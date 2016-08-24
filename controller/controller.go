@@ -51,7 +51,7 @@ func (c *Controller) Deploy(g *gin.Context) {
 
 	contentType := g.Request.Header.Get("Content-Type")
 	if contentType == "application/json" {
-		err, statusCode = c.Deployer.Deploy(g.Request, environmentName, org, space, appName, "", contentType, buffer)
+		err, statusCode = c.Deployer.Deploy(g.Request, environmentName, org, space, appName, "", contentType, g)
 		if err != nil {
 			logError(cannotDeployApplication, statusCode, err, g, c.Log)
 			return
@@ -74,7 +74,7 @@ func (c *Controller) Deploy(g *gin.Context) {
 			}
 			defer os.RemoveAll(appPath)
 
-			err, statusCode = c.Deployer.Deploy(g.Request, environmentName, org, space, appName, appPath, contentType, buffer)
+			err, statusCode = c.Deployer.Deploy(g.Request, environmentName, org, space, appName, appPath, contentType, g)
 
 			if err != nil {
 				logError(cannotDeployApplication, statusCode, err, g, c.Log)
