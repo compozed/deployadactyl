@@ -74,6 +74,7 @@ func (bg BlueGreen) Push(environment config.Environment, appPath string, deploym
 	// Rollback if deploy failed and this is not the first build or DisableFirstDeployRollback is false
 	if failed && (!firstDeploy || (firstDeploy && !environment.DisableFirstDeployRollback)) {
 		bg.rollbackAll(actors, deploymentInfo, firstDeploy)
+		return errors.Errorf(pushFailedRollbackTriggered + "\n" + combinedOutput.String())
 	}
 
 	if failed {

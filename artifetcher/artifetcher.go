@@ -3,8 +3,8 @@ package artifetcher
 
 import (
 	"bytes"
-	"crypto/tls"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -46,15 +46,16 @@ func (a *Artifetcher) Fetch(url, manifest string) (string, error) {
 	defer artifactFile.Close()
 	defer a.FileSystem.Remove(artifactFile.Name())
 
-	var proxyClient = &http.Client{
+	var client = &http.Client{
 		Timeout: 4 * time.Minute,
 		Transport: &http.Transport{
-			Proxy:             http.ProxyFromEnvironment,
-			DisableKeepAlives: true,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+			Dial: (&net.Dialer{
+				Timeout:   60 * time.Second,
+				KeepAlive: 60 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout:   15 * time.Second,
 			ResponseHeaderTimeout: 15 * time.Second,
+			ExpectContinueTimeout: 2 * time.Second,
 		},
 	}
 
@@ -64,7 +65,7 @@ func (a *Artifetcher) Fetch(url, manifest string) (string, error) {
 		return "", errors.Errorf("%s: %s", cannotCreateArtifactoryRequest, err)
 	}
 
-	response, err := proxyClient.Do(req)
+	response, err := client.Do(req)
 	if err != nil {
 		return "", errors.Errorf("%s: %s: %s", cannotGetURL, url, err)
 	}
