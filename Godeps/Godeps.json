@@ -8,13 +8,13 @@
 			"Rev": "99c3df83b51532e3615f851d8c2dbb638f5313bf"
 		},
 		{
-			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+			"ImportPath": "github.com/compozed/gin",
+			"Comment": "v1.0rc1-263-g021e07a",
+			"Rev": "021e07a5e7c3af73a25d614d3a463d9bfccb9a22"
 		},
 		{
-			"ImportPath": "github.com/gin-gonic/gin",
-			"Comment": "v1.0rc1-252-g233291e",
-			"Rev": "233291e4e2d016084f9e42e786e45dad8858ace4"
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin/binding",

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gin-gonic/gin"
+	"github.com/compozed/gin"
 )
 
 // Deployer handmade mock for tests.

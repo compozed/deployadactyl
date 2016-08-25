@@ -1,6 +1,6 @@
 package interfaces
 
-import "github.com/gin-gonic/gin"
+import "github.com/compozed/gin"
 
 // Endpoints interface.
 type Endpoints interface {

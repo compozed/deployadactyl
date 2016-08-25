@@ -3,7 +3,7 @@ package service_test
 import (
 	"os"
 
-	"github.com/gin-gonic/gin"
+	"github.com/compozed/gin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

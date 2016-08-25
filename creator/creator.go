@@ -22,7 +22,7 @@ import (
 	I "github.com/compozed/deployadactyl/interfaces"
 	"github.com/compozed/deployadactyl/logger"
 	"github.com/compozed/deployadactyl/randomizer"
-	"github.com/gin-gonic/gin"
+	"github.com/compozed/gin"
 	"github.com/go-errors/errors"
 	"github.com/op/go-logging"
 	"github.com/spf13/afero"

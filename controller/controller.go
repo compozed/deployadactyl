@@ -11,7 +11,7 @@ import (
 
 	"github.com/compozed/deployadactyl/config"
 	I "github.com/compozed/deployadactyl/interfaces"
-	"github.com/gin-gonic/gin"
+	"github.com/compozed/gin"
 	"github.com/op/go-logging"
 )
 

@@ -16,7 +16,7 @@ import (
 	"github.com/compozed/deployadactyl/geterrors"
 	I "github.com/compozed/deployadactyl/interfaces"
 	S "github.com/compozed/deployadactyl/structs"
-	"github.com/gin-gonic/gin"
+	"github.com/compozed/gin"
 	"github.com/go-errors/errors"
 	"github.com/op/go-logging"
 )
