@@ -64,6 +64,14 @@ func (c Courier) Exists(appName string) bool {
 	return err == nil
 }
 
+// Cups runs the Cloud Foundry CUPS command to create user provided
+// services.
+//
+// Returns the combined standard output and standard error.
+func (c Courier) Cups(appName string, body string) ([]byte, error) {
+	return c.Executor.Execute("cups", appName, "-p", body)
+}
+
 // CleanUp removes the temporary directory created by the Executor.
 func (c Courier) CleanUp() error {
 	return c.Executor.CleanUp()

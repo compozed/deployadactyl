@@ -4,6 +4,7 @@ import (
 	. "github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher/courier"
 	"github.com/compozed/deployadactyl/mocks"
 	"github.com/compozed/deployadactyl/randomizer"
+	"github.com/compozed/deployadactyl_compozed/test"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -163,6 +164,26 @@ var _ = Describe("Courier", func() {
 			Expect(courier.Exists(appName)).To(BeTrue())
 
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
+		})
+	})
+
+	Describe("CUPS", func() {
+		It("should add a user provided service in the cloud foundry space", func() {
+			var (
+				hostName = "hostName-" + test.RandStringRunes(10)
+				address  = "address-" + test.RandStringRunes(10)
+			)
+
+			body := "{" + hostName + ":" + address + "}"
+			expectedArgs := []string{"cups", appName, "-p", body}
+
+			executor.ExecuteCall.Returns.Output = []byte(output)
+			executor.ExecuteCall.Returns.Error = nil
+
+			out, err := courier.Cups(appName, body)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
+			Expect(string(out)).To(Equal(output))
 		})
 	})
 
