@@ -9,5 +9,6 @@ type Courier interface {
 	MapRoute(appName, domain string) ([]byte, error)
 	Logs(appName string) ([]byte, error)
 	Exists(appName string) bool
+	Cups(appName string, body string) ([]byte, error)
 	CleanUp() error
 }
