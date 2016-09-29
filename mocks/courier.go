@@ -80,6 +80,17 @@ type Courier struct {
 		}
 	}
 
+	CupsCall struct {
+		Received struct {
+			AppName string
+			Body    string
+		}
+		Returns struct {
+			Output []byte
+			Error  error
+		}
+	}
+
 	CleanUpCall struct {
 		Returns struct {
 			Error error
@@ -143,6 +154,14 @@ func (c *Courier) Exists(appName string) bool {
 	c.ExistsCall.Received.AppName = appName
 
 	return c.ExistsCall.Returns.Bool
+}
+
+// Cups mock method
+func (c *Courier) Cups(appName string, body string) ([]byte, error) {
+	c.CupsCall.Received.AppName = appName
+	c.CupsCall.Received.Body = body
+
+	return c.CupsCall.Returns.Output, c.CupsCall.Returns.Error
 }
 
 // CleanUp mock method.
