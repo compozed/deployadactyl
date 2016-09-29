@@ -1,6 +1,8 @@
 package courier_test
 
 import (
+	"fmt"
+
 	. "github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher/courier"
 	"github.com/compozed/deployadactyl/mocks"
 	"github.com/compozed/deployadactyl/randomizer"
@@ -166,21 +168,21 @@ var _ = Describe("Courier", func() {
 		})
 	})
 
-	Describe("CUPS", func() {
-		It("should add a user provided service in the cloud foundry space", func() {
+	Describe("creating user provided services", func() {
+		It("should get a valid Cloud Foundry command", func() {
 			var (
-				hostName = "hostName-" + randomizer.StringRunes(10)
-				address  = "address-" + randomizer.StringRunes(10)
+				hostName     = "hostName-" + randomizer.StringRunes(10)
+				address      = "address-" + randomizer.StringRunes(10)
+				body         = fmt.Sprintf("{%s:%s}", hostName, address)
+				expectedArgs = []string{"cups", appName, "-p", body}
 			)
-
-			body := "{" + hostName + ":" + address + "}"
-			expectedArgs := []string{"cups", appName, "-p", body}
 
 			executor.ExecuteCall.Returns.Output = []byte(output)
 			executor.ExecuteCall.Returns.Error = nil
 
 			out, err := courier.Cups(appName, body)
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
 			Expect(string(out)).To(Equal(output))
 		})
