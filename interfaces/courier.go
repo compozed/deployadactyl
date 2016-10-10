@@ -10,5 +10,6 @@ type Courier interface {
 	Logs(appName string) ([]byte, error)
 	Exists(appName string) bool
 	Cups(appName string, body string) ([]byte, error)
+	Uups(appName string, body string) ([]byte, error)
 	CleanUp() error
 }

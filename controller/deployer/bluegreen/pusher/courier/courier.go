@@ -68,6 +68,12 @@ func (c Courier) Cups(appName string, body string) ([]byte, error) {
 	return c.Executor.Execute("cups", appName, "-p", body)
 }
 
+// Uups runs the Cloud Foundry UUPS command to update a user provided serivce
+
+func (c Courier) Uups(appName string, body string) ([]byte, error) {
+	return c.Executor.Execute("uups", appName, "-p", body)
+}
+
 // Exists checks to see whether the application name exists already.
 //
 // Returns true if the application exists.
