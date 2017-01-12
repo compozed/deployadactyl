@@ -52,9 +52,12 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 		environments           = d.Config.Environments
 		authenticationRequired = environments[environment].Authenticate
 		deployEventData        = S.DeployEventData{}
-		manifest               []byte
+		manifest               *manifestro.Manifest
 		appPath                string
 	)
+
+	//Cleanup after deploy. I begin to think this should be switchable. Allow the deploy requester
+	// to specify if the cleanup should occur if the deploy fails.
 	defer func() { d.FileSystem.RemoveAll(appPath) }()
 
 	d.Log.Debug("prechecking the foundations")
@@ -74,24 +77,28 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 		password = d.Config.Password
 	}
 
+
 	if isJSON(contentType) {
 		d.Log.Debug("deploying from json request")
 		d.Log.Debug("building deploymentInfo")
-		deploymentInfo, err = getDeploymentInfo(req.Body)
+		deploymentInfo, err = getDeploymentInfo(req.Body, d.Log)
 		if err != nil {
 			fmt.Fprintln(response, err)
 			return http.StatusInternalServerError, err
 		}
 
 		if deploymentInfo.Manifest != "" {
-			manifest, err = base64.StdEncoding.DecodeString(deploymentInfo.Manifest)
+			decodedManifest, err := base64.StdEncoding.DecodeString(deploymentInfo.Manifest)
 			if err != nil {
 				fmt.Fprintln(response, err)
 				return http.StatusBadRequest, ManifestError{err}
 			}
+
+			manifest, _ = manifestro.CreateManifest(string(decodedManifest), d.Log)
 		}
 
-		appPath, err = d.Fetcher.Fetch(deploymentInfo.ArtifactURL, string(manifest))
+		appPath, err = d.Fetcher.Fetch(deploymentInfo.ArtifactURL, manifest.Yaml)
+
 		if err != nil {
 			fmt.Fprintln(response, err)
 			return http.StatusInternalServerError, err
@@ -104,7 +111,9 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 			return http.StatusInternalServerError, err
 		}
 
-		manifest, _ = d.FileSystem.ReadFile(appPath + "/manifest.yml")
+		decodedManifest, _ := d.FileSystem.ReadFile(appPath + "/manifest.yml")
+
+		manifest, _ = manifestro.CreateManifest(string(decodedManifest), d.Log)
 
 		deploymentInfo.ArtifactURL = appPath
 	} else {
@@ -119,10 +128,30 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 	deploymentInfo.AppName = appName
 	deploymentInfo.UUID = d.Randomizer.StringRunes(128)
 	deploymentInfo.SkipSSL = environments[environment].SkipSSL
-	deploymentInfo.Manifest = string(manifest)
+	deploymentInfo.Manifest = manifest.Yaml
 	deploymentInfo.Domain = environments[environment].Domain
 
-	instances := manifestro.GetInstances(deploymentInfo.Manifest)
+	instances := manifest.GetInstances()
+
+	if len(deploymentInfo.EnvironmentVariables) > 0 {
+
+		d.Log.Debugf("Manifest Before => %s", deploymentInfo.Manifest)
+
+		//#Add Environment Variables if any in the request!
+		for k, v := range deploymentInfo.EnvironmentVariables {
+			manifest.AddEnvVar(k, v)
+		}
+
+		//Put the manifest back
+		deploymentInfo.Manifest = manifest.Marshal()
+
+		d.Log.Debugf("Manifest After => %s", deploymentInfo.Manifest)
+
+		//Re-Write the manifest
+		d.Fetcher.WriteManifest(appPath, deploymentInfo.Manifest)
+
+	}
+
 	if instances != nil {
 		deploymentInfo.Instances = *instances
 	} else {
@@ -170,7 +199,7 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 	return http.StatusOK, err
 }
 
-func getDeploymentInfo(reader io.Reader) (S.DeploymentInfo, error) {
+func getDeploymentInfo(reader io.Reader, logger *logging.Logger) (S.DeploymentInfo, error) {
 	deploymentInfo := S.DeploymentInfo{}
 	err := json.NewDecoder(reader).Decode(&deploymentInfo)
 	if err != nil {
@@ -190,6 +219,9 @@ func getDeploymentInfo(reader io.Reader) (S.DeploymentInfo, error) {
 	if err != nil {
 		return S.DeploymentInfo{}, err
 	}
+
+	logger.Debugf("Deployment Info => %+v", deploymentInfo)
+
 	return deploymentInfo, nil
 }
 

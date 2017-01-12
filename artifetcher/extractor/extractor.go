@@ -10,6 +10,7 @@ import (
 
 	"github.com/op/go-logging"
 	"github.com/spf13/afero"
+	"strings"
 )
 
 // Extractor has a file system from which files are extracted from.
@@ -22,7 +23,7 @@ type Extractor struct {
 // If there is no manifest provided to this function, it will attempt to read a manifest file within the zip file.
 func (e *Extractor) Unzip(source, destination, manifest string) error {
 	e.Log.Info("extracting application")
-	e.Log.Debug(`parameters for extractor:
+	e.Log.Debugf(`parameters for extractor:
 	source: %+v
 	destination: %+v`, source, destination)
 
@@ -54,17 +55,9 @@ func (e *Extractor) Unzip(source, destination, manifest string) error {
 		}
 	}
 
-	if manifest != "" {
-		manifestFile, err := e.FileSystem.OpenFile(path.Join(destination, "manifest.yml"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		if err != nil {
-			return OpenManifestError{err}
-		}
-		defer manifestFile.Close()
-
-		_, err = fmt.Fprint(manifestFile, manifest)
-		if err != nil {
-			return PrintToManifestError{err}
-		}
+	err = e.WriteManifest(destination, manifest)
+	if err == nil {
+		return err
 	}
 
 	e.Log.Info("extract was successful")
@@ -99,6 +92,29 @@ func (e *Extractor) unzipFile(destination string, file *zip.File) error {
 	_, err = io.Copy(newFile, contents)
 	if err != nil {
 		return WriteFileError{savedLocation, err}
+	}
+
+	return nil
+}
+
+func (e *Extractor) WriteManifest(destination, manifest string) error {
+	if manifest != "" {
+		e.Log.Debugf("Creating Maninfest File from => %s", manifest)
+
+		if !strings.HasPrefix(manifest, "---") {
+			manifest = fmt.Sprintf("---\n%s", manifest)
+		}
+
+		manifestFile, err := e.FileSystem.OpenFile(path.Join(destination, "manifest.yml"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+		if err != nil {
+			return OpenManifestError{err}
+		}
+		defer manifestFile.Close()
+
+		_, err = fmt.Fprint(manifestFile, manifest)
+		if err != nil {
+			return PrintToManifestError{err}
+		}
 	}
 
 	return nil
