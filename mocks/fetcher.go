@@ -24,6 +24,17 @@ type Fetcher struct {
 			Error   error
 		}
 	}
+
+	WriteManifestCall struct {
+		Received struct {
+			Destination string
+			Manifest    string
+		}
+		Returns struct {
+			Error error
+		}
+	}
+
 }
 
 // Fetch mock method.
@@ -39,4 +50,12 @@ func (f *Fetcher) FetchZipFromRequest(req *http.Request) (string, error) {
 	f.FetchFromZipCall.Received.Request = req
 
 	return f.FetchFromZipCall.Returns.AppPath, f.FetchFromZipCall.Returns.Error
+}
+
+//WriteManifest mock method
+func (f *Fetcher) WriteManifest(destination, manifest string) error {
+	f.WriteManifestCall.Received.Destination = destination
+	f.WriteManifestCall.Received.Manifest = manifest
+
+	return f.WriteManifestCall.Returns.Error
 }

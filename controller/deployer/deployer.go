@@ -95,6 +95,8 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 			}
 
 			manifest, _ = manifestro.CreateManifest(string(decodedManifest), d.Log)
+		} else {
+			manifest, _ = manifestro.CreateManifest("", d.Log)
 		}
 
 		appPath, err = d.Fetcher.Fetch(deploymentInfo.ArtifactURL, manifest.Yaml)
@@ -133,29 +135,30 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 
 	instances := manifest.GetInstances()
 
-	if len(deploymentInfo.EnvironmentVariables) > 0 {
-
-		d.Log.Debugf("Manifest Before => %s", deploymentInfo.Manifest)
-
-		//#Add Environment Variables if any in the request!
-		for k, v := range deploymentInfo.EnvironmentVariables {
-			manifest.AddEnvVar(k, v)
-		}
-
-		//Put the manifest back
-		deploymentInfo.Manifest = manifest.Marshal()
-
-		d.Log.Debugf("Manifest After => %s", deploymentInfo.Manifest)
-
-		//Re-Write the manifest
-		d.Fetcher.WriteManifest(appPath, deploymentInfo.Manifest)
-
-	}
-
 	if instances != nil {
 		deploymentInfo.Instances = *instances
 	} else {
 		deploymentInfo.Instances = environments[environment].Instances
+	}
+
+	if manifest.HasApplications() {
+
+		//Add any Environment variables
+		addEnvResult, _ := manifest.AddEnvironmentVariables(deploymentInfo.EnvironmentVariables)
+
+		if manifest.Content.Applications[0].Path != "" || addEnvResult {
+
+			//Ensure path is empty. We are using a local/tmp file system with exploded contents for the deploy!
+			manifest.Content.Applications[0].Path = ""
+
+			deploymentInfo.Manifest = manifest.Marshal()
+
+			d.Log.Debugf("Manifest After => %s", deploymentInfo.Manifest)
+
+			//Re-Write the manifest
+			d.Fetcher.WriteManifest(appPath, deploymentInfo.Manifest)
+
+		}
 	}
 
 	e, found := environments[deploymentInfo.Environment]

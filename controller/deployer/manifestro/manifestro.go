@@ -6,16 +6,31 @@ import (
 )
 
 type manifestYaml struct {
-	Applications []struct {
-		Name      string `yaml:"name"`
-		Memory    string `yaml:"memory"`
-		Timeout   *uint16 `yaml:"timeout"`
-		Instances *uint16 `yaml:"instances"`
-		Path      string `yaml:"path"`
-		Java_opts string `yaml:"JAVA_OPTS"`
-		Buildpack string `yaml:"buildpack"`
-		Env       map[string]string `yaml:"env"`
-	} `yaml:"applications"`
+	Applications []Application `yaml:"applications"`
+}
+
+type Application struct {
+	Name              string `yaml:"name"`
+	Memory            string `yaml:"memory,omitempty"`
+	Timeout           *uint16 `yaml:"timeout,omitempty"`
+	Instances         *uint16 `yaml:"instances,omitempty"`
+	Path              string `yaml:"path,omitempty"`
+	Java_opts         string `yaml:"JAVA_OPTS,omitempty"`
+	Command           string `yaml:"command,omitempty"`
+	Buildpack         string `yaml:"buildpack,omitempty"`
+	Disk_quota        string `yaml:"disk_quota,omitempty"`
+	Domain            string `yaml:"domain,omitempty"`
+	Domains           []string `yaml:"domains,omitempty"`
+	Stack             string `yaml:"stack,omitempty"`
+	Health_check_type string `yaml:"health-check-type,omitempty"`
+	Host              string `yaml:"host,omitempty"`
+	Hosts             []string `yaml:"hosts,omitempty"`
+	No_Hostname       string `yaml:"no-hostname,omitempty"`
+	Routes []struct {
+		Route string `yaml:"route,omitempty"`
+	} `yaml:"routes,omitempty"`
+	Services []string `yaml:"services,omitempty"`
+	Env      map[string]string `yaml:"env,omitempty"`
 }
 
 //Contains state of a manifest
@@ -59,6 +74,8 @@ func CreateManifest(content string, logger *logging.Logger) (manifest *Manifest,
 
 func (manifest *Manifest) AddEnvVar(name string, value string) (err error) {
 
+	manifest.Log.Debugf("Attempting to add Map of Environment Variable [%s] to Manifest", name)
+
 	result := true
 
 	if !manifest.parsed {
@@ -71,7 +88,7 @@ func (manifest *Manifest) AddEnvVar(name string, value string) (err error) {
 
 	vars := make(map[string]string)
 
-	if manifest.Content.Applications != nil && len(manifest.Content.Applications) > 0 {
+	if manifest.HasApplications() {
 
 		if manifest.Content.Applications[0].Env != nil {
 			vars = manifest.Content.Applications[0].Env
@@ -79,12 +96,52 @@ func (manifest *Manifest) AddEnvVar(name string, value string) (err error) {
 
 		vars[name] = value
 		manifest.Content.Applications[0].Env = vars
-
-		//Erase Path if it exists. We are using the contents of a temp file system with exploded contents.
-		manifest.Content.Applications[0].Path = ""
 	}
 
 	return err
+}
+
+func (manifest *Manifest) AddEnvironmentVariables(m map[string]string) (result bool, err error) {
+
+	manifest.Log.Debugf("Attempting to add Map of Environment Variables to Manifest")
+
+	result = false
+
+	if m != nil && len(m) > 0 {
+		//#Add Environment Variables if any in the request!
+		for k, v := range m {
+			err = manifest.AddEnvVar(k, v)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		result = true
+	}
+
+	return result, err
+}
+
+func (manifest *Manifest) HasApplications() (bool) {
+
+	var (
+		result bool = true
+		err    error
+	)
+
+	if !manifest.parsed {
+		result, err = manifest.UnMarshal()
+	}
+
+	if !result || err != nil {
+		return false
+	}
+
+	if manifest.Content.Applications != nil && len(manifest.Content.Applications) > 0 {
+		return true
+	}
+
+	return false
 }
 
 func (manifest *Manifest) UnMarshal() (result bool, err error) {
@@ -92,6 +149,7 @@ func (manifest *Manifest) UnMarshal() (result bool, err error) {
 
 	if manifest.Yaml != "" {
 		manifest.Log.Debugf("UnMarshaling Yaml => %s", manifest.Yaml)
+		//err = yaml.Unmarshal([]byte(manifest.Yaml), &manifest.Content)
 		err = candiedyaml.Unmarshal([]byte(manifest.Yaml), &manifest.Content)
 		if err != nil {
 			manifest.Log.Errorf("Error Unmarshalling Manifest! Details: %v", err)
@@ -110,6 +168,8 @@ func (manifest *Manifest) UnMarshal() (result bool, err error) {
 
 func (manifest *Manifest) Marshal() (content string) {
 	manifest.Log.Debugf("Marshaling Manifest Contents = %+v", manifest.Content)
+
+	//resultBytes, err := yaml.Marshal(manifest.Content)
 
 	resultBytes, err := candiedyaml.Marshal(manifest.Content)
 

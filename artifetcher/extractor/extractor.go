@@ -10,7 +10,7 @@ import (
 
 	"github.com/op/go-logging"
 	"github.com/spf13/afero"
-	"strings"
+	//	"strings"
 )
 
 // Extractor has a file system from which files are extracted from.
@@ -101,9 +101,9 @@ func (e *Extractor) WriteManifest(destination, manifest string) error {
 	if manifest != "" {
 		e.Log.Debugf("Creating Maninfest File from => %s", manifest)
 
-		if !strings.HasPrefix(manifest, "---") {
-			manifest = fmt.Sprintf("---\n%s", manifest)
-		}
+		//if !strings.HasPrefix(manifest, "---") {
+		//	manifest = fmt.Sprintf("---\n%s", manifest)
+		//}
 
 		manifestFile, err := e.FileSystem.OpenFile(path.Join(destination, "manifest.yml"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
