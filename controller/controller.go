@@ -20,7 +20,7 @@ type Controller struct {
 
 // Deploy checks the request content type and passes it to the Deployer.
 func (c *Controller) Deploy(g *gin.Context) {
-	c.Log.Info("Request originated from: %+v", g.Request.RemoteAddr)
+	c.Log.Infof("Request originated from: %+v", g.Request.RemoteAddr)
 
 	response := &bytes.Buffer{}
 

@@ -6,4 +6,5 @@ import "net/http"
 type Fetcher interface {
 	Fetch(url, manifest string) (string, error)
 	FetchZipFromRequest(*http.Request) (string, error)
+	WriteManifest(destination, manifest string) (error)
 }
