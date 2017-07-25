@@ -35,8 +35,12 @@ func (c Courier) Delete(appName string) ([]byte, error) {
 // Push runs the Cloud Foundry push command.
 //
 // Returns the combined standard output and standard error.
-func (c Courier) Push(appName, appLocation, hostname string, instances uint16) ([]byte, error) {
-	return c.Executor.ExecuteInDirectory(appLocation, "push", appName, "-i", fmt.Sprint(instances), "-n", hostname)
+func (c Courier) Push(appName, appLocation, hostname string, instances uint16, pushOpts map[string]string) ([]byte, error) {
+	args := []string{"push", appName, "-i", fmt.Sprint(instances), "-n", hostname}
+	for key, value := range pushOpts {
+		args = append(args, key, value)
+	}
+	return c.Executor.ExecuteInDirectory(appLocation, args...)
 }
 
 // Rename runs the Cloud Foundry rename command.

@@ -20,5 +20,6 @@ type DeploymentInfo struct {
 	HealthCheckEndpoint  string            `json:"health_check_endpoint"`
 
 	// Generic map used for users to provide their own deployment properties in JSON format.
-	Data map[string]interface{} `json:"data"`
+	Data     map[string]interface{} `json:"data"`
+	PushOpts map[string]string
 }

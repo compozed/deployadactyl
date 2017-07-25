@@ -167,7 +167,7 @@ func (p Pusher) pushApplication(appName, appPath string) error {
 	defer func() { p.Response.Write(cloudFoundryLogs) }()
 	defer func() { p.Response.Write(pushOutput) }()
 
-	pushOutput, err = p.Courier.Push(appName, appPath, p.DeploymentInfo.AppName, p.DeploymentInfo.Instances)
+	pushOutput, err = p.Courier.Push(appName, appPath, p.DeploymentInfo.AppName, p.DeploymentInfo.Instances, p.DeploymentInfo.PushOpts)
 	p.Log.Infof("output from Cloud Foundry: \n%s", pushOutput)
 	if err != nil {
 		defer func() { p.Log.Errorf("logs from %s: \n%s", appName, cloudFoundryLogs) }()

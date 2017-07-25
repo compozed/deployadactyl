@@ -35,6 +35,7 @@ var _ = Describe("Pusher", func() {
 		randomUUID          string
 		randomEndpoint      string
 		randomFoundationURL string
+		randomPushOpts      map[string]string
 		tempAppWithUUID     string
 		skipSSL             bool
 		deploymentInfo      S.DeploymentInfo
@@ -57,6 +58,7 @@ var _ = Describe("Pusher", func() {
 		randomEndpoint = "randomEndpoint-" + randomizer.StringRunes(10)
 		randomUUID = randomizer.StringRunes(10)
 		randomInstances = uint16(rand.Uint32())
+		randomPushOpts = map[string]string{"--random-push-opt": randomizer.StringRunes(10)}
 
 		tempAppWithUUID = randomAppName + TemporaryNameSuffix + randomUUID
 
@@ -76,6 +78,7 @@ var _ = Describe("Pusher", func() {
 			Domain:              randomDomain,
 			UUID:                randomUUID,
 			HealthCheckEndpoint: randomEndpoint,
+			PushOpts:            randomPushOpts,
 		}
 
 		pusher = Pusher{
@@ -151,6 +154,7 @@ var _ = Describe("Pusher", func() {
 				Expect(courier.PushCall.Received.AppPath).To(Equal(randomAppPath))
 				Expect(courier.PushCall.Received.Hostname).To(Equal(randomAppName))
 				Expect(courier.PushCall.Received.Instances).To(Equal(randomInstances))
+				Expect(courier.PushCall.Received.PushOpts).To(Equal(randomPushOpts))
 
 				Eventually(response).Should(Say("push succeeded"))
 

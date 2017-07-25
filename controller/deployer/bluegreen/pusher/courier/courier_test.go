@@ -94,16 +94,38 @@ var _ = Describe("Courier", func() {
 			var (
 				appLocation  = "appLocation-" + randomizer.StringRunes(10)
 				instances    = uint16(rand.Uint32())
+				pushOpts     = map[string]string{}
 				expectedArgs = []string{"push", appName, "-i", fmt.Sprint(instances), "-n", hostname}
 			)
 
 			executor.ExecuteInDirectoryCall.Returns.Output = []byte(output)
 			executor.ExecuteInDirectoryCall.Returns.Error = nil
 
-			out, err := courier.Push(appName, appLocation, hostname, instances)
+			out, err := courier.Push(appName, appLocation, hostname, instances, pushOpts)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(executor.ExecuteInDirectoryCall.Received.Args).To(Equal(expectedArgs))
+			Expect(string(out)).To(Equal(output))
+		})
+
+		It("should pass all the push options to executor", func() {
+			var (
+				appLocation  = "appLocation-" + randomizer.StringRunes(10)
+				instances    = uint16(rand.Uint32())
+				pushOpts     = map[string]string{"--push-option-1": randomizer.StringRunes(10), "--push-option-2": randomizer.StringRunes(10)}
+				expectedArgs = []string{"push", appName, "-i", fmt.Sprint(instances), "-n", hostname}
+			)
+
+			executor.ExecuteInDirectoryCall.Returns.Output = []byte(output)
+			executor.ExecuteInDirectoryCall.Returns.Error = nil
+
+			out, err := courier.Push(appName, appLocation, hostname, instances, pushOpts)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(executor.ExecuteInDirectoryCall.Received.Args[0:len(expectedArgs)]).To(Equal(expectedArgs))
+			Expect(executor.ExecuteInDirectoryCall.Received.Args[7]).To(Equal(pushOpts[executor.ExecuteInDirectoryCall.Received.Args[6]]))
+			Expect(executor.ExecuteInDirectoryCall.Received.Args[9]).To(Equal(pushOpts[executor.ExecuteInDirectoryCall.Received.Args[8]]))
+
 			Expect(string(out)).To(Equal(output))
 		})
 	})
