@@ -26,7 +26,7 @@ func (a *Artifetcher) Fetch(url, manifest string) (string, error) {
 	a.Log.Info("fetching artifact")
 	a.Log.Debugf("artifact URL: %s", url)
 
-	artifactFile, err := a.FileSystem.TempFile("", "deployadactyl-zip-")
+	artifactFile, err := a.FileSystem.TempFile("/tmp/lifecycle", "deployadactyl-zip-")
 	if err != nil {
 		return "", CreateTempFileError{err}
 	}
@@ -66,7 +66,7 @@ func (a *Artifetcher) Fetch(url, manifest string) (string, error) {
 		return "", WriteResponseError{err}
 	}
 
-	unzippedPath, err := a.FileSystem.TempDir("", "deployadactyl-unzipped-")
+	unzippedPath, err := a.FileSystem.TempDir("/tmp/lifecycle", "deployadactyl-unzipped-")
 	if err != nil {
 		return "", CreateTempDirectoryError{err}
 	}
@@ -86,7 +86,7 @@ func (a *Artifetcher) Fetch(url, manifest string) (string, error) {
 //
 // Returns a string to the unzipped application path and an error.
 func (a *Artifetcher) FetchZipFromRequest(req *http.Request) (string, error) {
-	zipFile, err := a.FileSystem.TempFile("", "deployadactyl-")
+	zipFile, err := a.FileSystem.TempFile("/tmp/lifecycle", "deployadactyl-")
 	if err != nil {
 		return "", CreateTempFileError{err}
 	}
@@ -99,7 +99,7 @@ func (a *Artifetcher) FetchZipFromRequest(req *http.Request) (string, error) {
 		return "", WriteResponseError{err}
 	}
 
-	unzippedPath, err := a.FileSystem.TempDir("", "deployadactyl-")
+	unzippedPath, err := a.FileSystem.TempDir("/tmp/lifecycle", "deployadactyl-")
 	if err != nil {
 		return "", CreateTempDirectoryError{err}
 	}

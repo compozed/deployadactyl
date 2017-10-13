@@ -136,6 +136,7 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 	deploymentInfo.Manifest = string(manifest)
 	deploymentInfo.Domain = environments[environment].Domain
 	deploymentInfo.AppPath = appPath
+	deploymentInfo.PushOpts = map[string]string{}
 
 	instances := manifestro.GetInstances(deploymentInfo.Manifest)
 	if instances != nil {

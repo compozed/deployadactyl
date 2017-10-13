@@ -68,6 +68,7 @@ var _ = Describe("Deployer", func() {
 		foundations          []string
 		environments         = map[string]config.Environment{}
 		af                   *afero.Afero
+		pushOpts             map[string]string
 	)
 
 	BeforeEach(func() {
@@ -90,6 +91,7 @@ var _ = Describe("Deployer", func() {
 		uuid = "uuid-" + randomizer.StringRunes(10)
 		manifest = "manifest-" + randomizer.StringRunes(10)
 		instances = uint16(rand.Uint32())
+		pushOpts = map[string]string{}
 
 		base64Manifest := base64.StdEncoding.EncodeToString([]byte(manifest))
 
@@ -122,6 +124,7 @@ var _ = Describe("Deployer", func() {
 			Manifest:    manifest,
 			Domain:      domain,
 			AppPath:     appPath,
+			PushOpts:    pushOpts,
 		}
 
 		foundations = []string{randomizer.StringRunes(10)}
@@ -510,6 +513,7 @@ applications:
 				Expect(blueGreener.PushCall.Received.AppPath).To(Equal(testManifestLocation))
 				Expect(blueGreener.PushCall.Received.DeploymentInfo.Manifest).To(Equal(fmt.Sprintf("---\napplications:\n- name: deployadactyl\n  memory: 256M\n  disk_quota: 256M\n")))
 				Expect(blueGreener.PushCall.Received.DeploymentInfo.ArtifactURL).To(ContainSubstring(testManifestLocation))
+				Expect(blueGreener.PushCall.Received.DeploymentInfo.PushOpts).To(Equal(pushOpts))
 			})
 		})
 
