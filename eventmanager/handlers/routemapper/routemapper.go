@@ -78,6 +78,20 @@ func (r RouteMapper) OnEvent(event S.Event) error {
 	domains, _ := r.Courier.Domains()
 
 	r.Log.Debugf("mapping routes to %s", tempAppWithUUID)
+	return r.routeMapper(m, tempAppWithUUID, domains, deploymentInfo)
+}
+
+func isRouteADomainInTheFoundation(route string, domains []string) bool {
+	for _, domain := range domains {
+		if route == domain {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r RouteMapper) routeMapper(m *manifest, tempAppWithUUID string, domains []string, deploymentInfo *S.DeploymentInfo) error {
 	for _, route := range m.Applications[0].Routes {
 		s := strings.SplitN(route.Route, ".", 2)
 
@@ -96,20 +110,8 @@ func (r RouteMapper) OnEvent(event S.Event) error {
 		} else {
 			return InvalidRouteError{route.Route}
 		}
-
 		r.Log.Infof("mapped route %s to %s", route.Route, tempAppWithUUID)
 	}
-
 	r.Log.Info("finished mapping routes")
 	return nil
-}
-
-func isRouteADomainInTheFoundation(route string, domains []string) bool {
-	for _, domain := range domains {
-		if route == domain {
-			return true
-		}
-	}
-
-	return false
 }
