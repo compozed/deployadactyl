@@ -93,6 +93,7 @@ func isRouteADomainInTheFoundation(route string, domains []string) bool {
 func (r RouteMapper) routeMapper(m *manifest, tempAppWithUUID string, domains []string, deploymentInfo *S.DeploymentInfo) error {
 	for _, route := range m.Applications[0].Routes {
 		s := strings.SplitN(route.Route, ".", 2)
+		p := strings.SplitN(s[1], "/", 2)
 
 		if isRouteADomainInTheFoundation(route.Route, domains) {
 			output, err := r.Courier.MapRoute(tempAppWithUUID, route.Route, deploymentInfo.AppName)
@@ -106,6 +107,13 @@ func (r RouteMapper) routeMapper(m *manifest, tempAppWithUUID string, domains []
 				r.Log.Errorf("failed to map route: %s: %s", route.Route, string(output))
 				return MapRouteError{route.Route, output}
 			}
+		} else if isRouteADomainInTheFoundation(p[0], domains) {
+			output, err := r.Courier.MapRouteWithPath(tempAppWithUUID, p[0], s[0], p[1])
+			if err != nil {
+				r.Log.Error(MapRouteError{route.Route, output})
+				return MapRouteError{route.Route, output}
+			}
+
 		} else {
 			return InvalidRouteError{route.Route}
 		}
