@@ -29,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
 	"github.com/spf13/afero"
+	"github.com/compozed/deployadactyl/controller/deployer/error_finder"
 )
 
 // ENDPOINT is used by the handler to define the deployment endpoint.
@@ -172,6 +173,7 @@ func (c Creator) createDeployer() I.Deployer {
 		Prechecker:   c.createPrechecker(),
 		EventManager: c.CreateEventManager(),
 		Randomizer:   c.createRandomizer(),
+		ErrorFinder:  c.createErrorFinder(),
 		Log:          c.CreateLogger(),
 		FileSystem:   c.CreateFileSystem(),
 	}
@@ -207,6 +209,10 @@ func (c Creator) createBlueGreener() I.BlueGreener {
 		PusherCreator: c,
 		Log:           c.CreateLogger(),
 	}
+}
+
+func (c Creator) createErrorFinder() I.ErrorFinder{
+	return &error_finder.ErrorFinder{}
 }
 
 func createCreator(l logging.Level, cfg config.Config) (Creator, error) {

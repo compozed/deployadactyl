@@ -59,6 +59,8 @@ func (h HealthChecker) OnEvent(event S.Event) error {
 		return err
 	}
 
+	// unmapTemporaryRoute will be called before deleteTemporaryRoute
+	defer h.deleteTemporaryRoute(tempAppWithUUID, domain)
 	defer h.unmapTemporaryRoute(tempAppWithUUID, domain)
 
 	newFoundationURL = strings.Replace(newFoundationURL, h.NewURL, fmt.Sprintf("%s.%s", tempAppWithUUID, h.NewURL), 1)
@@ -98,6 +100,20 @@ func (h HealthChecker) mapTemporaryRoute(tempAppWithUUID, domain string) error {
 		return MapRouteError{tempAppWithUUID, domain}
 	}
 	h.Log.Infof("mapped temporary route %s.%s", tempAppWithUUID, domain)
+
+	return nil
+}
+
+func (h HealthChecker) deleteTemporaryRoute(tempAppWithUUID, domain string) error {
+	h.Log.Debugf("deleting temporary route %s.%s", tempAppWithUUID, domain)
+
+	out, err := h.Courier.DeleteRoute(domain, tempAppWithUUID)
+	if err != nil {
+		h.Log.Errorf("failed to delete temporary route: %s", out)
+		return DeleteRouteError{tempAppWithUUID, domain}
+	}
+
+	h.Log.Infof("deleted temporary route %s.%s", tempAppWithUUID, domain)
 
 	return nil
 }

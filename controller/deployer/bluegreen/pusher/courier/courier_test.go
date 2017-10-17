@@ -76,7 +76,7 @@ var _ = Describe("Courier", func() {
 
 	Describe("deleting an app", func() {
 		It("should get a valid Cloud Foundry delete command", func() {
-			expectedArgs := []string{"delete", appName, "-f"}
+			expectedArgs := []string{"delete", appName, "-f", "-r"}
 
 			executor.ExecuteCall.Returns.Output = []byte(output)
 			executor.ExecuteCall.Returns.Error = nil
@@ -187,6 +187,24 @@ var _ = Describe("Courier", func() {
 			executor.ExecuteCall.Returns.Error = nil
 
 			out, err := courier.UnmapRouteWithPath(appName, domain, hostname, path)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
+			Expect(string(out)).To(Equal(output))
+		})
+	})
+
+	Describe("deleting a route", func() {
+		It("should delete route with hostname and domain", func() {
+			var (
+				domain       = "domain-" + randomizer.StringRunes(10)
+				expectedArgs = []string{"delete-route", domain, "-n", hostname, "-f"}
+			)
+
+			executor.ExecuteCall.Returns.Output = []byte(output)
+			executor.ExecuteCall.Returns.Error = nil
+
+			out, err := courier.DeleteRoute(domain, hostname)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))

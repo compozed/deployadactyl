@@ -25,7 +25,6 @@ func main() {
 	var (
 		config               = flag.String("config", defaultConfigFilePath, "location of the config file")
 		envVarHandlerEnabled = flag.Bool("env", false, "enable environment variable handling")
-		healthCheckEnabled   = flag.Bool("health-check", false, "health checker to check endpoints during a deployment")
 		routeMapperEnabled   = flag.Bool("route-mapper", false, "enables route mapper to map additional routes from a manifest")
 	)
 	flag.Parse()
@@ -56,16 +55,14 @@ func main() {
 		em.AddHandler(envVarHandler, C.DeployStartEvent)
 	}
 
-	if *healthCheckEnabled {
-		healthHandler := healthchecker.HealthChecker{
-			OldURL: "api.cf",
-			NewURL: "apps",
-			Client: c.CreateHTTPClient(),
-			Log:    c.CreateLogger(),
-		}
-		log.Infof("registering health check handler")
-		em.AddHandler(healthHandler, C.PushFinishedEvent)
+	healthHandler := healthchecker.HealthChecker{
+		OldURL: "api.cf",
+		NewURL: "apps",
+		Client: c.CreateHTTPClient(),
+		Log:    c.CreateLogger(),
 	}
+	log.Infof("registering health check handler")
+	em.AddHandler(healthHandler, C.PushFinishedEvent)
 
 	if *routeMapperEnabled {
 		routeMapper := routemapper.RouteMapper{

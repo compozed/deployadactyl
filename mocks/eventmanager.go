@@ -41,5 +41,9 @@ func (e *EventManager) Emit(event S.Event) error {
 
 	e.EmitCall.Received.Events = append(e.EmitCall.Received.Events, event)
 
-	return e.EmitCall.Returns.Error[e.EmitCall.TimesCalled]
+	if len(e.EmitCall.Returns.Error) > e.EmitCall.TimesCalled {
+		return e.EmitCall.Returns.Error[e.EmitCall.TimesCalled]
+	}
+
+	return nil
 }

@@ -29,6 +29,7 @@ type Environment struct {
 	Authenticate bool
 	SkipSSL      bool `yaml:"skip_ssl"`
 	Instances    uint16
+	CustomParams map[string]interface{} `yaml:"custom_params"`
 }
 
 type configYaml struct {

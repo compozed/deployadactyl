@@ -29,6 +29,7 @@ var _ = Describe("Healthchecker", func() {
 		randomPassword      string
 		randomOrg           string
 		randomSpace         string
+		randomHostname		string
 
 		event         S.Event
 		healthchecker HealthChecker
@@ -44,6 +45,7 @@ var _ = Describe("Healthchecker", func() {
 
 		randomFoundationURL = fmt.Sprintf("https://api.cf.%s.com", s)
 		randomDomain = fmt.Sprintf("apps.%s.com", s)
+		randomHostname = randomAppName
 
 		randomEndpoint = "/" + randomizer.StringRunes(10)
 
@@ -116,6 +118,19 @@ var _ = Describe("Healthchecker", func() {
 					Expect(courier.UnmapRouteCall.Received.AppName).To(Equal(randomAppName))
 					Expect(courier.UnmapRouteCall.Received.Domain).To(Equal(randomDomain))
 					Expect(courier.UnmapRouteCall.Received.Hostname).To(Equal(randomAppName))
+				})
+
+				It("deletes the temporary routes", func() {
+					healthchecker.OnEvent(event)
+
+					Expect(courier.DeleteRouteCall.Received.Domain).To(Equal(randomDomain))
+					Expect(courier.DeleteRouteCall.Received.Hostname).To(Equal(randomHostname))
+				})
+
+				It("unmaps the temporary route before deleting it", func(){
+					healthchecker.OnEvent(event)
+
+					Expect(courier.UnmapRouteCall.OrderCalled < courier.DeleteRouteCall.OrderCalled).To(Equal(true))
 				})
 
 				It("prints success logs to the console", func() {

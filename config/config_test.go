@@ -23,6 +23,33 @@ environments:
   - api2.example.com
   skip_ssl: true
   instances: 3
+  custom_params:
+    service_now_table_name: u_change
+    service_now_column_names:
+      change_reason: u_reason
+      implementation_plan: u_my_plan
+- name: Prod
+  domain: example.com
+  foundations:
+  - api3.example.com
+  - api4.example.com
+  skip_ssl: false
+  custom_params:
+    service_now_table_name: change_request
+    service_now_column_names:
+      change_reason: reason
+      implementation_plan: my_plan
+`
+	badConfigPath = "./test_bad_config.yml"
+	noCustomParamsConfig = `---
+environments:
+- name: Test
+  domain: test.example.com
+  foundations:
+  - api1.example.com
+  - api2.example.com
+  skip_ssl: true
+  instances: 3
 - name: Prod
   domain: example.com
   foundations:
@@ -30,7 +57,6 @@ environments:
   - api4.example.com
   skip_ssl: false
 `
-	badConfigPath = "./test_bad_config.yml"
 )
 
 var _ = Describe("Config", func() {
@@ -39,11 +65,28 @@ var _ = Describe("Config", func() {
 		envMap     map[string]Environment
 		cfUsername string
 		cfPassword string
+		testColumns map[interface{}]interface{}
+		prodColumns map[interface{}]interface{}
 	)
 
 	BeforeEach(func() {
+		testCustomParams := make(map[string]interface{})
+		prodCustomParams := make(map[string]interface{})
+
 		cfUsername = "cfUsername-" + randomizer.StringRunes(10)
 		cfPassword = "cfPassword-" + randomizer.StringRunes(10)
+		testColumns = make(map[interface{}]interface{})
+		prodColumns = make(map[interface{}]interface{})
+		testColumns["change_reason"] = "u_reason"
+		testColumns["implementation_plan"] = "u_my_plan"
+		prodColumns["change_reason"] = "reason"
+		prodColumns["implementation_plan"] = "my_plan"
+
+		testCustomParams["service_now_column_names"] = testColumns
+		testCustomParams["service_now_table_name"] = "u_change"
+
+		prodCustomParams["service_now_column_names"] = prodColumns
+		prodCustomParams["service_now_table_name"] = "change_request"
 
 		env = &mocks.Env{}
 		env.GetCall.Returns.Values = map[string]string{}
@@ -55,6 +98,7 @@ var _ = Describe("Config", func() {
 				Domain:      "test.example.com",
 				SkipSSL:     true,
 				Instances:   3,
+				CustomParams: testCustomParams,
 			},
 			"prod": {
 				Name:        "Prod",
@@ -62,6 +106,7 @@ var _ = Describe("Config", func() {
 				Domain:      "example.com",
 				SkipSSL:     false,
 				Instances:   1,
+				CustomParams: prodCustomParams,
 			},
 		}
 
@@ -110,6 +155,22 @@ var _ = Describe("Config", func() {
 			_, err := Custom(env.Get, customConfigPath)
 
 			Expect(err).To(MatchError("missing environment variables: CF_USERNAME"))
+		})
+	})
+
+	Context("when custom params are empty", func() {
+		It("should return a valid config with custom params nil", func() {
+			env.GetCall.Returns.Values["CF_USERNAME"] = cfUsername
+			env.GetCall.Returns.Values["CF_PASSWORD"] = cfPassword
+			env.GetCall.Returns.Values["PORT"] = ""
+
+			Expect(ioutil.WriteFile(customConfigPath, []byte(noCustomParamsConfig), 0644)).To(Succeed())
+
+			config, err := Custom(env.Get, customConfigPath)
+
+			Expect(err).ToNot(HaveOccurred())
+			var nilMap map[string]interface{}
+			Expect(config.Environments["test"].CustomParams).To(Equal(nilMap))
 		})
 	})
 

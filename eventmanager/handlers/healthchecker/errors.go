@@ -32,6 +32,15 @@ func (e MapRouteError) Error() string {
 	return fmt.Sprintf("could not map temporary health check route %s.%s", e.AppName, e.Domain)
 }
 
+type DeleteRouteError struct {
+	Domain 	 string
+	Hostname string
+}
+
+func (e DeleteRouteError) Error() string {
+	return fmt.Sprintf("could not delete temporary health check route %s.%s", e.Hostname, e.Domain)
+}
+
 type ClientError struct {
 	Err error
 }

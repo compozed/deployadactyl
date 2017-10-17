@@ -44,6 +44,7 @@ var _ = Describe("Deployer", func() {
 		prechecker     *mocks.Prechecker
 		eventManager   *mocks.EventManager
 		randomizerMock *mocks.Randomizer
+		errorFinder    *mocks.ErrorFinder
 
 		req                  *http.Request
 		requestBody          *bytes.Buffer
@@ -75,6 +76,7 @@ var _ = Describe("Deployer", func() {
 		prechecker = &mocks.Prechecker{}
 		eventManager = &mocks.EventManager{}
 		randomizerMock = &mocks.Randomizer{}
+		errorFinder = &mocks.ErrorFinder{}
 
 		appName = "appName-" + randomizer.StringRunes(10)
 		appPath = "appPath-" + randomizer.StringRunes(10)
@@ -153,6 +155,7 @@ var _ = Describe("Deployer", func() {
 			prechecker,
 			eventManager,
 			randomizerMock,
+			errorFinder,
 			log,
 			af,
 		}
@@ -313,7 +316,6 @@ var _ = Describe("Deployer", func() {
 
 	Describe("deploying with an unknown request type", func() {
 		It("returns an http.StatusBadRequest and an error", func() {
-
 			statusCode, err := deployer.Deploy(req, environment, org, space, appName, "application/bork", response)
 			Expect(err).To(MatchError(InvalidContentTypeError{}))
 
@@ -403,19 +405,20 @@ applications:
 				Expect(err).To(MatchError(EventError{C.DeployStartEvent, errors.New(C.DeployStartEvent + " error")}))
 
 				Expect(statusCode).To(Equal(http.StatusInternalServerError))
-				Expect(eventManager.EmitCall.TimesCalled).To(Equal(2), eventManagerNotEnoughCalls)
+				Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
 			})
 
 			Context("when EventManager also fails on "+C.DeployFinishEvent, func() {
 				It("outputs "+C.DeployFinishEvent+" error", func() {
 					eventManager.EmitCall.Returns.Error = append(eventManager.EmitCall.Returns.Error, errors.New(C.DeployStartEvent+" error"))
+					eventManager.EmitCall.Returns.Error = append(eventManager.EmitCall.Returns.Error, nil)
 					eventManager.EmitCall.Returns.Error = append(eventManager.EmitCall.Returns.Error, errors.New(""+C.DeployFinishEvent+" error"))
 
 					statusCode, err := deployer.Deploy(req, environment, org, space, appName, "application/json", response)
 					Expect(err).To(MatchError("an error occurred in the " + C.DeployStartEvent + " event: " + C.DeployStartEvent + " error: an error occurred in the " + C.DeployFinishEvent + " event: " + C.DeployFinishEvent + " error"))
 
 					Expect(statusCode).To(Equal(http.StatusInternalServerError))
-					Expect(eventManager.EmitCall.TimesCalled).To(Equal(2), eventManagerNotEnoughCalls)
+					Expect(eventManager.EmitCall.TimesCalled).To(Equal(3), eventManagerNotEnoughCalls)
 				})
 			})
 		})
@@ -434,6 +437,18 @@ applications:
 
 				Expect(statusCode).To(Equal(http.StatusInternalServerError))
 				Expect(eventManager.EmitCall.Received.Events[1].Type).To(Equal(C.DeployFailureEvent))
+				Expect(eventManager.EmitCall.Received.Events[1].Error).To(Equal(expectedError))
+			})
+
+			It("passes the response string to FindError and emits a deploy.failure event with the error returned from FindError", func(){
+				err := errors.New("blue greener failed")
+				blueGreener.PushCall.Returns.Error = err
+
+				expectedError := errors.New("Some error")
+				errorFinder.FindErrorCall.Returns.Error = expectedError
+
+				_, err = deployer.Deploy(req, environment, org, space, appName, "application/json", response)
+				Expect(errorFinder.FindErrorCall.Received.Response).To(ContainSubstring(response.String()))
 				Expect(eventManager.EmitCall.Received.Events[1].Error).To(Equal(expectedError))
 			})
 		})
@@ -524,6 +539,7 @@ applications:
 				prechecker,
 				eventManager,
 				randomizerMock,
+				errorFinder,
 				log,
 				af,
 			}

@@ -29,7 +29,7 @@ func (c Courier) Login(foundationURL, username, password, org, space string, ski
 //
 // Returns the combined standard output and standard error.
 func (c Courier) Delete(appName string) ([]byte, error) {
-	return c.Executor.Execute("delete", appName, "-f")
+	return c.Executor.Execute("delete", appName, "-f", "-r")
 }
 
 // Push runs the Cloud Foundry push command.
@@ -72,6 +72,10 @@ func (c Courier) UnmapRouteWithPath(appName, domain, hostname, path string) ([]b
 // Returns the combined standard output and standard error.
 func (c Courier) UnmapRoute(appName, domain, hostname string) ([]byte, error) {
 	return c.Executor.Execute("unmap-route", appName, domain, "-n", hostname)
+}
+
+func (c Courier) DeleteRoute(domain, hostname string) ([]byte, error) {
+	return c.Executor.Execute("delete-route", domain, "-n", hostname, "-f" )
 }
 
 // Logs runs the Cloud Foundry logs command.

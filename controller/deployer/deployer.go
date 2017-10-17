@@ -17,6 +17,7 @@ import (
 	"github.com/compozed/deployadactyl/logger"
 	S "github.com/compozed/deployadactyl/structs"
 	"github.com/spf13/afero"
+	"bytes"
 )
 
 const (
@@ -44,6 +45,7 @@ type Deployer struct {
 	Prechecker   I.Prechecker
 	EventManager I.EventManager
 	Randomizer   I.Randomizer
+	ErrorFinder I.ErrorFinder
 	Log          I.Logger
 	FileSystem   *afero.Afero
 }
@@ -161,6 +163,7 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 	deployEventData = S.DeployEventData{Response: response, DeploymentInfo: &deploymentInfo, RequestBody: req.Body}
 
 	defer emitDeployFinish(d, deployEventData, response, &err, &statusCode, deploymentLogger)
+	defer emitDeploySuccess(d, deployEventData, response, &err, &statusCode, deploymentLogger)
 
 	deploymentLogger.Debugf("emitting a %s event", C.DeployStartEvent)
 	err = d.EventManager.Emit(S.Event{Type: C.DeployStartEvent, Data: deployEventData})
@@ -168,8 +171,6 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 		deploymentLogger.Error(err)
 		return http.StatusInternalServerError, EventError{C.DeployStartEvent, err}
 	}
-
-	defer emitDeploySuccess(d, deployEventData, response, &err, &statusCode, deploymentLogger)
 
 	err = d.BlueGreener.Push(e, appPath, deploymentInfo, response)
 	if err != nil {
@@ -230,6 +231,15 @@ func emitDeployFinish(d Deployer, deployEventData S.DeployEventData, response io
 func emitDeploySuccess(d Deployer, deployEventData S.DeployEventData, response io.ReadWriter, err *error, statusCode *int, deploymentLogger logger.DeploymentLogger) {
 	deployEvent := S.Event{Type: C.DeploySuccessEvent, Data: deployEventData}
 	if *err != nil {
+		tempBuffer := bytes.Buffer{}
+		tempBuffer.ReadFrom(response)
+		fmt.Fprint(response, tempBuffer.String())
+
+		foundErr := d.ErrorFinder.FindError(tempBuffer.String())
+		if foundErr != nil {
+			*err = foundErr
+		}
+
 		deployEvent.Type = C.DeployFailureEvent
 		deployEvent.Error = *err
 	}

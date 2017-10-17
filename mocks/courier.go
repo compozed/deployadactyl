@@ -2,6 +2,7 @@ package mocks
 
 // Courier handmade mock for tests.
 type Courier struct {
+	TimesCourierCalled int
 	LoginCall struct {
 		Received struct {
 			FoundationURL string
@@ -89,10 +90,24 @@ type Courier struct {
 	}
 
 	UnmapRouteCall struct {
+		OrderCalled int
 		Received struct {
 			AppName  string
 			Domain   string
 			Hostname string
+		}
+		Returns struct {
+			Output []byte
+			Error  error
+		}
+	}
+
+	DeleteRouteCall struct {
+		OrderCalled int
+		Received struct {
+			Domain   string
+			Hostname string
+
 		}
 		Returns struct {
 			Output []byte
@@ -224,11 +239,25 @@ func (c *Courier) MapRoute(appName, domain, hostname string) ([]byte, error) {
 
 // UnmapRoute mock method.
 func (c *Courier) UnmapRoute(appName, domain, hostname string) ([]byte, error) {
+	defer func() { c.TimesCourierCalled++ }()
+
+	c.UnmapRouteCall.OrderCalled = c.TimesCourierCalled
 	c.UnmapRouteCall.Received.AppName = appName
 	c.UnmapRouteCall.Received.Domain = domain
 	c.UnmapRouteCall.Received.Hostname = hostname
 
 	return c.UnmapRouteCall.Returns.Output, c.UnmapRouteCall.Returns.Error
+}
+
+// DeleteRoute mock method.
+func (c *Courier) DeleteRoute(domain, hostname string) ([]byte, error) {
+	defer func() { c.TimesCourierCalled++ }()
+
+	c.DeleteRouteCall.OrderCalled = c.TimesCourierCalled
+	c.DeleteRouteCall.Received.Domain = domain
+	c.DeleteRouteCall.Received.Hostname = hostname
+
+	return c.DeleteRouteCall.Returns.Output, c.DeleteRouteCall.Returns.Error
 }
 
 // Logs mock method.

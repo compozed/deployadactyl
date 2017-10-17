@@ -223,7 +223,7 @@ func (p Pusher) deleteApplication(appName string) error {
 	out, err := p.Courier.Delete(appName)
 	if err != nil {
 		p.Log.Errorf("could not delete %s", appName)
-		p.Log.Errorf("deletion error %s", appName)
+		p.Log.Errorf("deletion error %s", err.Error())
 		p.Log.Errorf("deletion output", string(out))
 		return DeleteApplicationError{appName, out}
 	}
