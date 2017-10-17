@@ -46,11 +46,25 @@ func (c Courier) Rename(appName, newAppName string) ([]byte, error) {
 	return c.Executor.Execute("rename", appName, newAppName)
 }
 
+// MapRoute runs the Cloud Foundry map-route command and added path arguement
+//
+// Returns the combined standard output and standard error.
+func (c Courier) MapRouteWithPath(appName, domain, hostname, path string) ([]byte, error) {
+	return c.Executor.Execute("map-route", appName, domain, "-n", hostname, "--path", path)
+}
+
 // MapRoute runs the Cloud Foundry map-route command.
 //
 // Returns the combined standard output and standard error.
 func (c Courier) MapRoute(appName, domain, hostname string) ([]byte, error) {
 	return c.Executor.Execute("map-route", appName, domain, "-n", hostname)
+}
+
+// UnmapRoute runs the Cloud Foundry unmap-route command.
+//
+// Returns the combined standard output and standard error.
+func (c Courier) UnmapRouteWithPath(appName, domain, hostname, path string) ([]byte, error) {
+	return c.Executor.Execute("unmap-route", appName, domain, "-n", hostname, "--path", path)
 }
 
 // UnmapRoute runs the Cloud Foundry unmap-route command.
