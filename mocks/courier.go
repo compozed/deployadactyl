@@ -3,7 +3,7 @@ package mocks
 // Courier handmade mock for tests.
 type Courier struct {
 	TimesCourierCalled int
-	LoginCall struct {
+	LoginCall          struct {
 		Received struct {
 			FoundationURL string
 			Username      string
@@ -91,7 +91,7 @@ type Courier struct {
 
 	UnmapRouteCall struct {
 		OrderCalled int
-		Received struct {
+		Received    struct {
 			AppName  string
 			Domain   string
 			Hostname string
@@ -104,10 +104,9 @@ type Courier struct {
 
 	DeleteRouteCall struct {
 		OrderCalled int
-		Received struct {
+		Received    struct {
 			Domain   string
 			Hostname string
-
 		}
 		Returns struct {
 			Output []byte

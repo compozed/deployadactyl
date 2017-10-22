@@ -11,6 +11,7 @@ import (
 	"github.com/compozed/deployadactyl/controller/deployer"
 	"github.com/compozed/deployadactyl/controller/deployer/bluegreen"
 	"github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher"
+	"github.com/compozed/deployadactyl/controller/deployer/error_finder"
 	"github.com/compozed/deployadactyl/eventmanager"
 	I "github.com/compozed/deployadactyl/interfaces"
 	"github.com/compozed/deployadactyl/logger"
@@ -21,7 +22,6 @@ import (
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
-	"github.com/compozed/deployadactyl/controller/deployer/error_finder"
 )
 
 // ENDPOINT is used by the handler to define the deployment endpoint.

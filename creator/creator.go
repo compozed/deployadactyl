@@ -20,6 +20,7 @@ import (
 	"github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher"
 	"github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher/courier"
 	"github.com/compozed/deployadactyl/controller/deployer/bluegreen/pusher/courier/executor"
+	"github.com/compozed/deployadactyl/controller/deployer/error_finder"
 	"github.com/compozed/deployadactyl/controller/deployer/prechecker"
 	"github.com/compozed/deployadactyl/eventmanager"
 	I "github.com/compozed/deployadactyl/interfaces"
@@ -29,7 +30,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
 	"github.com/spf13/afero"
-	"github.com/compozed/deployadactyl/controller/deployer/error_finder"
 )
 
 // ENDPOINT is used by the handler to define the deployment endpoint.
@@ -211,7 +211,7 @@ func (c Creator) createBlueGreener() I.BlueGreener {
 	}
 }
 
-func (c Creator) createErrorFinder() I.ErrorFinder{
+func (c Creator) createErrorFinder() I.ErrorFinder {
 	return &error_finder.ErrorFinder{}
 }
 

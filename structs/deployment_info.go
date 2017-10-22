@@ -18,6 +18,7 @@ type DeploymentInfo struct {
 	AppPath              string
 	EnvironmentVariables map[string]string `json:"environment_variables"`
 	HealthCheckEndpoint  string            `json:"health_check_endpoint"`
+	CustomParams         map[string]interface{}
 
 	// Generic map used for users to provide their own deployment properties in JSON format.
 	Data map[string]interface{} `json:"data"`

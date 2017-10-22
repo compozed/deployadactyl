@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"regexp"
 
+	"bytes"
+
 	"github.com/compozed/deployadactyl/config"
 	C "github.com/compozed/deployadactyl/constants"
 	"github.com/compozed/deployadactyl/controller/deployer/manifestro"
@@ -17,7 +19,6 @@ import (
 	"github.com/compozed/deployadactyl/logger"
 	S "github.com/compozed/deployadactyl/structs"
 	"github.com/spf13/afero"
-	"bytes"
 )
 
 const (
@@ -45,7 +46,7 @@ type Deployer struct {
 	Prechecker   I.Prechecker
 	EventManager I.EventManager
 	Randomizer   I.Randomizer
-	ErrorFinder I.ErrorFinder
+	ErrorFinder  I.ErrorFinder
 	Log          I.Logger
 	FileSystem   *afero.Afero
 }
@@ -136,6 +137,8 @@ func (d Deployer) Deploy(req *http.Request, environment, org, space, appName, co
 	deploymentInfo.Manifest = string(manifest)
 	deploymentInfo.Domain = environments[environment].Domain
 	deploymentInfo.AppPath = appPath
+	deploymentInfo.CustomParams = make(map[string]interface{})
+	deploymentInfo.CustomParams = environments[environment].CustomParams
 
 	instances := manifestro.GetInstances(deploymentInfo.Manifest)
 	if instances != nil {

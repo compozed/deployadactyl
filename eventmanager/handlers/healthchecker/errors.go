@@ -33,7 +33,7 @@ func (e MapRouteError) Error() string {
 }
 
 type DeleteRouteError struct {
-	Domain 	 string
+	Domain   string
 	Hostname string
 }
 

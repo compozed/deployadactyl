@@ -14,7 +14,7 @@ func (e LoginError) Error() string {
 	return fmt.Sprintf("login failed: %s", errs)
 }
 
-	type PushError struct {
+type PushError struct {
 	PushErrors []error
 }
 

@@ -24,7 +24,6 @@ func (c *Controller) Deploy(g *gin.Context) {
 	response := &bytes.Buffer{}
 
 	defer io.Copy(g.Writer, response)
-
 	statusCode, err := c.Deployer.Deploy(
 		g.Request,
 		g.Param("environment"),

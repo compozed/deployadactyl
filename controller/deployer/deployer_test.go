@@ -46,28 +46,30 @@ var _ = Describe("Deployer", func() {
 		randomizerMock *mocks.Randomizer
 		errorFinder    *mocks.ErrorFinder
 
-		req                  *http.Request
-		requestBody          *bytes.Buffer
-		appName              string
-		appPath              string
-		artifactURL          string
-		domain               string
-		environment          string
-		org                  string
-		space                string
-		username             string
-		uuid                 string
-		manifest             string
-		instances            uint16
-		password             string
-		testManifestLocation string
-		response             *bytes.Buffer
-		logBuffer            *Buffer
-		log                  interfaces.Logger
-		deploymentInfo       S.DeploymentInfo
-		foundations          []string
-		environments         = map[string]config.Environment{}
-		af                   *afero.Afero
+		req                          *http.Request
+		requestBody                  *bytes.Buffer
+		appName                      string
+		appPath                      string
+		artifactURL                  string
+		domain                       string
+		environment                  string
+		org                          string
+		space                        string
+		username                     string
+		uuid                         string
+		manifest                     string
+		instances                    uint16
+		password                     string
+		testManifestLocation         string
+		response                     *bytes.Buffer
+		logBuffer                    *Buffer
+		log                          interfaces.Logger
+		deploymentInfo               S.DeploymentInfo
+		deploymentInfoNoCustomParams S.DeploymentInfo
+		foundations                  []string
+		environments                 = map[string]config.Environment{}
+		environmentsNoCustomParams   = map[string]config.Environment{}
+		af                           *afero.Afero
 	)
 
 	BeforeEach(func() {
@@ -109,7 +111,27 @@ var _ = Describe("Deployer", func() {
 
 		req, _ = http.NewRequest("POST", "", requestBody)
 
+		customParams := make(map[string]interface{})
+		customParams["service_now_column_name"] = "u_change"
+		customParams["service_now_table_name"] = "u_table"
+
 		deploymentInfo = S.DeploymentInfo{
+			ArtifactURL:  artifactURL,
+			Username:     username,
+			Password:     password,
+			Environment:  environment,
+			Org:          org,
+			Space:        space,
+			AppName:      appName,
+			UUID:         uuid,
+			Instances:    instances,
+			Manifest:     manifest,
+			Domain:       domain,
+			AppPath:      appPath,
+			CustomParams: customParams,
+		}
+
+		deploymentInfoNoCustomParams = S.DeploymentInfo{
 			ArtifactURL: artifactURL,
 			Username:    username,
 			Password:    password,
@@ -127,12 +149,12 @@ var _ = Describe("Deployer", func() {
 		foundations = []string{randomizer.StringRunes(10)}
 		response = &bytes.Buffer{}
 
-		environments = map[string]config.Environment{}
 		environments[environment] = config.Environment{
-			Name:        environment,
-			Domain:      domain,
-			Foundations: foundations,
-			Instances:   instances,
+			Name:         environment,
+			Domain:       domain,
+			Foundations:  foundations,
+			Instances:    instances,
+			CustomParams: customParams,
 		}
 
 		c = config.Config{
@@ -440,7 +462,7 @@ applications:
 				Expect(eventManager.EmitCall.Received.Events[1].Error).To(Equal(expectedError))
 			})
 
-			It("passes the response string to FindError and emits a deploy.failure event with the error returned from FindError", func(){
+			It("passes the response string to FindError and emits a deploy.failure event with the error returned from FindError", func() {
 				err := errors.New("blue greener failed")
 				blueGreener.PushCall.Returns.Error = err
 
@@ -625,6 +647,53 @@ applications:
 				Expect(blueGreener.PushCall.Received.AppPath).To(Equal(testManifestLocation))
 				Expect(blueGreener.PushCall.Received.DeploymentInfo.Manifest).To(Equal(fmt.Sprintf("---\napplications:\n- name: deployadactyl\n  memory: 256M\n  disk_quota: 256M\n")))
 				Expect(blueGreener.PushCall.Received.DeploymentInfo.ArtifactURL).To(ContainSubstring(testManifestLocation))
+			})
+		})
+	})
+
+	Describe("extract custom params from yaml", func() {
+		Context("when custom params are provided", func() {
+			It("should marshal params to deploymentInfo", func() {
+				deployer.Deploy(req, environment, org, space, appName, "application/json", response)
+
+				Expect(blueGreener.PushCall.Received.DeploymentInfo.CustomParams["service_now_column_name"].(string)).To(Equal("u_change"))
+				Expect(blueGreener.PushCall.Received.DeploymentInfo.CustomParams["service_now_table_name"].(string)).To(Equal("u_table"))
+			})
+		})
+
+		Context("when no custom params are provided", func() {
+			BeforeEach(func() {
+				environmentsNoCustomParams[environment] = config.Environment{
+					Name:        environment,
+					Domain:      domain,
+					Foundations: foundations,
+					Instances:   instances,
+				}
+
+				c := config.Config{
+					Username:     username,
+					Password:     password,
+					Environments: environmentsNoCustomParams,
+				}
+
+				deployer = Deployer{
+					c,
+					blueGreener,
+					fetcher,
+					prechecker,
+					eventManager,
+					randomizerMock,
+					errorFinder,
+					log,
+					af,
+				}
+			})
+
+			It("doesn't return an error", func() {
+				_, err := deployer.Deploy(req, environment, org, space, appName, "application/json", response)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(blueGreener.PushCall.Received.DeploymentInfo.CustomParams).To(BeNil())
 			})
 		})
 	})
