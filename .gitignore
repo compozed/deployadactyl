@@ -5,3 +5,4 @@ vendor
 coverage.txt
 config.yml
 .config
+*.coverprofile
