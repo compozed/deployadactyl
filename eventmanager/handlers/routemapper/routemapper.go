@@ -45,17 +45,9 @@ func (r RouteMapper) OnEvent(event S.Event) error {
 
 	r.Courier = event.Data.(S.PushEventData).Courier.(I.Courier)
 
-	if deploymentInfo.Manifest != "" {
-		manifestBytes = []byte(deploymentInfo.Manifest)
-	} else if deploymentInfo.AppPath != "" {
-		manifestBytes, err = r.FileSystem.ReadFile(deploymentInfo.AppPath + "/manifest.yml")
-		if err != nil {
-			r.Log.Errorf("failed to read manifest file: %s", err.Error())
-			return ReadFileError{err}
-		}
-	} else {
-		r.Log.Info("finished mapping routes: no manifest found")
-		return nil
+	manifestBytes, err = r.readManifest(deploymentInfo)
+	if err != nil || manifestBytes == nil {
+		return err
 	}
 
 	m := &manifest{}
@@ -131,4 +123,24 @@ func (r RouteMapper) routeMapper(manifest *manifest, tempAppWithUUID string, dom
 	}
 	r.Log.Info("route mapping successful: finished mapping routes")
 	return nil
+}
+
+func (r RouteMapper) readManifest(deploymentInfo *S.DeploymentInfo) ([]byte, error) {
+	var manifestBytes []byte
+	var err error
+
+	if deploymentInfo.Manifest != "" {
+		manifestBytes = []byte(deploymentInfo.Manifest)
+		return manifestBytes, nil
+	} else if deploymentInfo.AppPath != "" {
+		manifestBytes, err = r.FileSystem.ReadFile(deploymentInfo.AppPath + "/manifest.yml")
+		if err != nil {
+			r.Log.Errorf("failed to read manifest file: %s", err.Error())
+			return nil, ReadFileError{err}
+		}
+		return manifestBytes, nil
+	} else {
+		r.Log.Info("finished mapping routes: no manifest found")
+		return nil, nil
+	}
 }
