@@ -196,11 +196,13 @@ applications:
 
 			courier.DomainsCall.Returns.Domains = []string{randomDomain + "0", randomDomain + "1", randomDomain + "2"}
 		})
+
 		It("returns nil", func() {
 			err := routemapper.OnEvent(event)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
+
 		It("calls map-route for the number of routes with a path arguement", func() {
 			routemapper.OnEvent(event)
 
