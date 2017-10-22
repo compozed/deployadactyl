@@ -45,17 +45,9 @@ func (r RouteMapper) OnEvent(event S.Event) error {
 
 	r.Courier = event.Data.(S.PushEventData).Courier.(I.Courier)
 
-	if deploymentInfo.Manifest != "" {
-		manifestBytes = []byte(deploymentInfo.Manifest)
-	} else if deploymentInfo.AppPath != "" {
-		manifestBytes, err = r.FileSystem.ReadFile(deploymentInfo.AppPath + "/manifest.yml")
-		if err != nil {
-			r.Log.Errorf("failed to read manifest file: %s", err.Error())
-			return ReadFileError{err}
-		}
-	} else {
-		r.Log.Info("finished mapping routes: no manifest found")
-		return nil
+	manifestBytes, err = r.readManifest(deploymentInfo)
+	if err != nil || manifestBytes == nil {
+		return err
 	}
 
 	m := &manifest{}
@@ -86,8 +78,28 @@ func isRouteADomainInTheFoundation(route string, domains []string) bool {
 			return true
 		}
 	}
-
 	return false
+}
+
+func (r RouteMapper) readManifest(deploymentInfo *S.DeploymentInfo) ([]byte, error) {
+	var (
+		manifestBytes []byte
+		err           error
+	)
+	if deploymentInfo.Manifest != "" {
+		manifestBytes = []byte(deploymentInfo.Manifest)
+		return manifestBytes, nil
+	} else if deploymentInfo.AppPath != "" {
+		manifestBytes, err = r.FileSystem.ReadFile(deploymentInfo.AppPath + "/manifest.yml")
+		if err != nil {
+			r.Log.Errorf("failed to read manifest file: %s", err.Error())
+			return nil, ReadFileError{err}
+		}
+		return manifestBytes, nil
+	} else {
+		r.Log.Info("finished mapping routes: no manifest found")
+		return nil, nil
+	}
 }
 
 // routeMapper is used to decide how to map an applications routes that are given to it from the manifest.
@@ -97,12 +109,12 @@ func isRouteADomainInTheFoundation(route string, domains []string) bool {
 func (r RouteMapper) routeMapper(manifest *manifest, tempAppWithUUID string, domains []string, deploymentInfo *S.DeploymentInfo) error {
 
 	for _, route := range manifest.Applications[0].Routes {
-		var routeWithPath []string
+		var domainAndPath []string
 
-		domain := strings.SplitN(route.Route, ".", 2)
+		appNameAndDomain := strings.SplitN(route.Route, ".", 2)
 
-		if len(domain) >= 2 {
-			routeWithPath = strings.SplitN(domain[1], "/", 2)
+		if len(appNameAndDomain) >= 2 {
+			domainAndPath = strings.SplitN(appNameAndDomain[1], "/", 2)
 		}
 
 		if isRouteADomainInTheFoundation(route.Route, domains) {
@@ -111,14 +123,14 @@ func (r RouteMapper) routeMapper(manifest *manifest, tempAppWithUUID string, dom
 				r.Log.Errorf("failed to map route: %s: %s", route.Route, string(output))
 				return MapRouteError{route.Route, output}
 			}
-		} else if len(domain) >= 2 && isRouteADomainInTheFoundation(domain[1], domains) {
-			output, err := r.Courier.MapRoute(tempAppWithUUID, domain[1], domain[0])
+		} else if len(appNameAndDomain) >= 2 && isRouteADomainInTheFoundation(appNameAndDomain[1], domains) {
+			output, err := r.Courier.MapRoute(tempAppWithUUID, appNameAndDomain[1], appNameAndDomain[0])
 			if err != nil {
 				r.Log.Errorf("failed to map route: %s: %s", route.Route, string(output))
 				return MapRouteError{route.Route, output}
 			}
-		} else if routeWithPath != nil && isRouteADomainInTheFoundation(routeWithPath[0], domains) {
-			output, err := r.Courier.MapRouteWithPath(tempAppWithUUID, routeWithPath[0], domain[0], routeWithPath[1])
+		} else if domainAndPath != nil && isRouteADomainInTheFoundation(domainAndPath[0], domains) {
+			output, err := r.Courier.MapRouteWithPath(tempAppWithUUID, domainAndPath[0], appNameAndDomain[0], domainAndPath[1])
 			if err != nil {
 				r.Log.Error(MapRouteError{route.Route, output})
 				return MapRouteError{route.Route, output}

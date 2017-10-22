@@ -207,9 +207,8 @@ applications:
 			routemapper.OnEvent(event)
 
 			for i := 0; i < len(routes); i++ {
-				Expect(courier.MapRouteWithPathCall.Received.AppName[i]).To(Equal(randomTemporaryAppName))
-				Expect(courier.MapRouteWithPathCall.Received.Domain[i]).To(Equal(randomDomain + strconv.Itoa(i)))
 				Expect(courier.MapRouteWithPathCall.Received.Hostname[i]).To(Equal(randomHostName + strconv.Itoa(i)))
+				Expect(courier.MapRouteWithPathCall.Received.Domain[i]).To(Equal(randomDomain + strconv.Itoa(i)))
 				Expect(courier.MapRouteWithPathCall.Received.Path[i]).To(Equal(randomPath + strconv.Itoa(i)))
 			}
 		})
