@@ -26,6 +26,7 @@ var _ = Describe("Routemapper", func() {
 		randomTemporaryAppName string
 		randomFoundationURL    string
 		randomDomain           string
+		randomPath             string
 		randomUsername         string
 		randomPassword         string
 		randomOrg              string
@@ -49,6 +50,7 @@ var _ = Describe("Routemapper", func() {
 		s := "random-" + randomizer.StringRunes(10)
 		randomFoundationURL = fmt.Sprintf("https://api.cf.%s.com", s)
 		randomDomain = fmt.Sprintf("apps.%s.com", s)
+		randomPath = "randomPath-" + randomizer.StringRunes(5)
 
 		randomUsername = "randomUsername" + randomizer.StringRunes(10)
 		randomPassword = "randomPassword" + randomizer.StringRunes(10)
@@ -166,6 +168,48 @@ applications:
 			Expect(logBuffer).To(Say("mapping routes"))
 			Expect(logBuffer).To(Say("failed to map route"))
 			Expect(logBuffer).To(Say("map route output"))
+		})
+	})
+
+	Context("when a route in the manifest inclues a path", func() {
+		var routes []string
+
+		BeforeEach(func() {
+			routes = []string{
+				fmt.Sprintf("%s0.%s0/%s0", randomHostName, randomDomain, randomPath),
+				fmt.Sprintf("%s1.%s1/%s1", randomHostName, randomDomain, randomPath),
+				fmt.Sprintf("%s2.%s2/%s2", randomHostName, randomDomain, randomPath),
+			}
+
+			deploymentInfo.Manifest = fmt.Sprintf(`
+---
+applications:
+- name: example
+  routes:
+  - route: %s
+  - route: %s
+  - route: %s`,
+				routes[0],
+				routes[1],
+				routes[2],
+			)
+
+			courier.DomainsCall.Returns.Domains = []string{randomDomain + "0", randomDomain + "1", randomDomain + "2"}
+		})
+		It("returns nil", func() {
+			err := routemapper.OnEvent(event)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+		It("calls map-route for the number of routes with a path arguement", func() {
+			routemapper.OnEvent(event)
+
+			for i := 0; i < len(routes); i++ {
+				Expect(courier.MapRouteWithPathCall.Received.AppName[i]).To(Equal(randomTemporaryAppName))
+				Expect(courier.MapRouteWithPathCall.Received.Domain[i]).To(Equal(randomDomain + strconv.Itoa(i)))
+				Expect(courier.MapRouteWithPathCall.Received.Hostname[i]).To(Equal(randomHostName + strconv.Itoa(i)))
+				Expect(courier.MapRouteWithPathCall.Received.Path[i]).To(Equal(randomPath + strconv.Itoa(i)))
+			}
 		})
 	})
 

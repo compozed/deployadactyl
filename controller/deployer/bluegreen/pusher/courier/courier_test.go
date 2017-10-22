@@ -142,6 +142,22 @@ var _ = Describe("Courier", func() {
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
 			Expect(string(out)).To(Equal(output))
 		})
+		It("should get a valid Cloud Foundry map-route command with a path arguement", func() {
+			var (
+				domain       = "domain-" + randomizer.StringRunes(10)
+				path         = "path-" + randomizer.StringRunes(5)
+				expectedArgs = []string{"map-route", appName, domain, "-n", hostname, "--path", path}
+			)
+
+			executor.ExecuteCall.Returns.Output = []byte(output)
+			executor.ExecuteCall.Returns.Error = nil
+
+			out, err := courier.MapRouteWithPath(appName, domain, hostname, path)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
+			Expect(string(out)).To(Equal(output))
+		})
 	})
 
 	Describe("unmapping a route", func() {
@@ -155,6 +171,22 @@ var _ = Describe("Courier", func() {
 			executor.ExecuteCall.Returns.Error = nil
 
 			out, err := courier.UnmapRoute(appName, domain, hostname)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
+			Expect(string(out)).To(Equal(output))
+		})
+		It("should get a valid Cloud Foundry unmap-route command with path", func() {
+			var (
+				domain       = "domain-" + randomizer.StringRunes(10)
+				path         = "path-" + randomizer.StringRunes(5)
+				expectedArgs = []string{"unmap-route", appName, domain, "-n", hostname, "--path", path}
+			)
+
+			executor.ExecuteCall.Returns.Output = []byte(output)
+			executor.ExecuteCall.Returns.Error = nil
+
+			out, err := courier.UnmapRouteWithPath(appName, domain, hostname, path)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))

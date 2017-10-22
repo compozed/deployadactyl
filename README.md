@@ -73,7 +73,7 @@ The configuration file can be placed anywhere within the Deployadactyl directory
 |**Param**|**Necessity**|**Type**|**Description**|
 |---|:---:|---|---|
 |`name`|**Required**|`string`| Used in the deploy when the users are sending a request to Deployadactyl to specify which environment from the config they want to use.|
-|`foundations` |**Required**|`[]string`|A list of Cloud Foundry instance URLs.|
+|`foundations` |**Required**|`[]string`|A list of Cloud Foundry Cloud Controller URLs.|
 |`domain`|*Optional*|`string`| Used to specify a load balanced URL that has previously been created on the Cloud Foundry instances.|
 |`authenticate` |*Optional*|`bool`| Used to specify if basic authentication is required for users. See the [authentication section](https://github.com/compozed/deployadactyl/wiki/Deployadactyl-API-v1.0.0#authentication) in the [API documentation](https://github.com/compozed/deployadactyl/wiki/Deployadactyl-API-Versions) for more details|
 |`skip_ssl` |*Optional*|`bool`| Used to skip SSL verification when Deployadactyl logs into Cloud Foundry.|
@@ -87,8 +87,8 @@ environments:
   - name: preproduction
     domain: preproduction.example.com
     foundations:
-    - https://preproduction.foundation-1.example.com
-    - https://preproduction.foundation-2.example.com
+    - https://api.foundation-1.example.com
+    - https://api.foundation-2.example.com
     authenticate: false
     skip_ssl: true
     instances: 2
@@ -137,13 +137,13 @@ $ make dependencies
 After a [configuration file](#configuration-file) has been created and environment variables have been set, the server can be run using the following commands:
 
 ```bash
-$ go run server.go
+$ cd ~/go/src/github.com/compozed/deployadactyl && go run server.go
 ```
 
 or
 
 ```bash
-$ go build && ./deployadactyl
+$ cd ~/go/src/github.com/compozed/deployadactyl && go build && ./deployadactyl
 ```
 
 ## How to Push Deployadactyl to Cloud Foundry
@@ -192,7 +192,7 @@ With Deployadactyl you can optionally register event handlers to perform any add
 ### Available Events
 
 |**Event Type**|**Returned Struct**|**Emitted**|
-|---|---|---|---|---|
+|---|---|---|
 |`deploy.start`|[DeployEventData](structs/deploy_event_data.go)|Before deployment starts
 |`deploy.success`|[DeployEventData](structs/deploy_event_data.go)|When a deployment succeeds
 |`deploy.failure`|[DeployEventData](structs/deploy_event_data.go)|When a deployment fails

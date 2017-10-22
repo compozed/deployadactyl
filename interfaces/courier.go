@@ -7,6 +7,7 @@ type Courier interface {
 	Push(appName, appLocation, hostname string, instances uint16) ([]byte, error)
 	Rename(oldName, newName string) ([]byte, error)
 	MapRoute(appName, domain, hostname string) ([]byte, error)
+	MapRouteWithPath(appName, domain, hostname, path string) ([]byte, error)
 	UnmapRoute(appName, domain, hostname string) ([]byte, error)
 	DeleteRoute(domain, hostname string) ([]byte, error)
 	Logs(appName string) ([]byte, error)

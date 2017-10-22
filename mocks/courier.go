@@ -62,6 +62,20 @@ type Courier struct {
 		}
 	}
 
+	MapRouteWithPathCall struct {
+		TimesCalled int
+		Received    struct {
+			AppName  []string
+			Domain   []string
+			Hostname []string
+			Path     []string
+		}
+		Returns struct {
+			Output [][]byte
+			Error  []error
+		}
+	}
+
 	MapRouteCall struct {
 		TimesCalled int
 		Received    struct {
@@ -181,6 +195,26 @@ func (c *Courier) Rename(appName, newAppName string) ([]byte, error) {
 	c.RenameCall.Received.AppNameVenerable = newAppName
 
 	return c.RenameCall.Returns.Output, c.RenameCall.Returns.Error
+}
+
+// MapRoute mock method.
+func (c *Courier) MapRouteWithPath(appName, domain, hostname, path string) ([]byte, error) {
+	defer func() { c.MapRouteCall.TimesCalled++ }()
+
+	c.MapRouteWithPathCall.Received.AppName = append(c.MapRouteWithPathCall.Received.AppName, appName)
+	c.MapRouteWithPathCall.Received.Domain = append(c.MapRouteWithPathCall.Received.Domain, domain)
+	c.MapRouteWithPathCall.Received.Hostname = append(c.MapRouteWithPathCall.Received.Hostname, hostname)
+	c.MapRouteWithPathCall.Received.Path = append(c.MapRouteWithPathCall.Received.Path, path)
+
+	if len(c.MapRouteWithPathCall.Returns.Output) == 0 && len(c.MapRouteWithPathCall.Returns.Error) == 0 {
+		return []byte{}, nil
+	} else if len(c.MapRouteWithPathCall.Returns.Output) == 0 {
+		return []byte{}, c.MapRouteWithPathCall.Returns.Error[c.MapRouteCall.TimesCalled]
+	} else if len(c.MapRouteWithPathCall.Returns.Error) == 0 {
+		return c.MapRouteWithPathCall.Returns.Output[c.MapRouteWithPathCall.TimesCalled], nil
+	}
+
+	return c.MapRouteWithPathCall.Returns.Output[c.MapRouteWithPathCall.TimesCalled], c.MapRouteWithPathCall.Returns.Error[c.MapRouteWithPathCall.TimesCalled]
 }
 
 // MapRoute mock method.
