@@ -198,7 +198,7 @@ applications:
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("calls map-route for the number of routes with a path arguement", func() {
+		It("calls map-route for the number of routes with a path argument", func() {
 			routemapper.CustomRouteMapper(routeMapperRequest)
 
 			for i := 0; i < len(routes); i++ {

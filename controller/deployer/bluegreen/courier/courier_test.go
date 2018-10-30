@@ -2,8 +2,9 @@ package courier_test
 
 import (
 	"fmt"
-	. "github.com/compozed/deployadactyl/controller/deployer/bluegreen/courier"
 	"math/rand"
+
+	. "github.com/compozed/deployadactyl/controller/deployer/bluegreen/courier"
 
 	"github.com/compozed/deployadactyl/interfaces"
 	"github.com/compozed/deployadactyl/mocks"
@@ -173,7 +174,7 @@ var _ = Describe("Courier", func() {
 			Expect(executor.ExecuteCall.Received.Args).To(Equal(expectedArgs))
 			Expect(string(out)).To(Equal(output))
 		})
-		It("should get a valid Cloud Foundry map-route command with a path arguement", func() {
+		It("should get a valid Cloud Foundry map-route command with a path argument", func() {
 			var (
 				domain       = "domain-" + randomizer.StringRunes(10)
 				path         = "path-" + randomizer.StringRunes(5)

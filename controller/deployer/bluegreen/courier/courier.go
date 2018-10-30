@@ -81,7 +81,7 @@ func (c Courier) Rename(appName, newAppName string) ([]byte, error) {
 	return c.Executor.Execute("rename", appName, newAppName)
 }
 
-// MapRoute runs the Cloud Foundry map-route command and added path arguement
+// MapRoute runs the Cloud Foundry map-route command and added path argument
 //
 // Returns the combined standard output and standard error.
 func (c Courier) MapRouteWithPath(appName, domain, hostname, path string) ([]byte, error) {
