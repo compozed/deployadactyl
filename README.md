@@ -82,6 +82,9 @@ or
 $ make dependencies
 ```
 
+or
+
+If you have Go 1.11 or above you can use [Modules feature](https://github.com/golang/go/wiki/Modules) and skip above steps.
 
 ### Configuration File
 
